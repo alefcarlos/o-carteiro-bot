@@ -27,7 +27,7 @@ var bot = new builder.UniversalBot(connector, [
     },
     function (session, results) {
         session.dialogData.trackingCode = results.response.code;
-        var _msg = `A categoria da sua encomenda é ${results.response.category}, aguarde um momento enquanto busco as informações...`;
+        var _msg = `Aguarde um momento enquanto busco as informações do código ${session.dialogData.trackingCode}`;
         session.say(_msg);
 
         session.sendTyping();
@@ -35,16 +35,19 @@ var bot = new builder.UniversalBot(connector, [
         trackingCorreios.track(session.dialogData.trackingCode).then((result) => {
             var msg = '';
 
-            if (result === null || result.lenght === 0)
+            if (result === null || result.lenght === 0) {
                 msg = 'Desculpe-me, mas ainda não foram encontradas informações com esse código';
-            else if (result && result[0].erro)
-                msg = `Desculpe-me, mas não foram encontradas informações do pedido, pois ${result[0].erro.toLocaleLowerCase()}`;
-            else {
-                var _evento = result[0].evento[0];
-                msg = `Obtive as informações com sucesso, a última atualização é ${_evento.descricao}`;
+                session.endConversation(msg);
             }
-
-            session.endConversation(msg);
+            else if (result && result[0].erro) {
+                msg = `Desculpe-me, mas não foram encontradas informações do pedido, pois ${result[0].erro.toLocaleLowerCase()}`;
+                session.endConversation(msg);
+            }
+            else {
+                session.beginDialog('trackingInfo', { data: result[0] });
+                // var _evento = result[0].evento[0];
+                // msg = `Obtive as informações com sucesso, a última atualização é ${_evento.descricao}`;
+            }
         }).catch((err) => {
             session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
         });
@@ -82,3 +85,21 @@ bot.dialog('askForTrackingCode', [
 //     var msg = "Código do rastreio de até 13 digitos.";
 //     session.endDialog(msg);
 // });
+
+// Add dialog to return list of shirts available
+bot.dialog('trackingInfo', function (session, args) {
+    var msg = new builder.Message(session);
+    var _data = args.data;
+    var _lastEvent = _data.evento[0];
+
+    msg.addAttachment(new builder.HeroCard(session)
+        .title("Informações do rastreio")
+        .subtitle(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`)
+        .text(`${_lastEvent.descricao}`));
+
+    // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
+    // .buttons([
+    //     builder.CardAction.imBack(session, "buy classic white t-shirt", "Buy")
+    // ]));
+    session.send(msg).endConversation();
+});
