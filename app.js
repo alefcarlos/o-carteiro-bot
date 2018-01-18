@@ -1,6 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
 var trackingCorreios = require('tracking-correios');
+var axios = require('axios');
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -23,7 +24,7 @@ var inMemoryStorage = new builder.MemoryBotStorage();
 // Um bot que obtém o rastreio de um item no correios
 var bot = new builder.UniversalBot(connector, [
     function (session) {
-        session.send('Oi, eu sou O Carteiro, vou te ajudar com o rastreio de itens do correios ;)');
+        session.send('Olá, eu sou O Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.beginDialog('askForTrackingCode');
     },
     function (session, results) {
@@ -58,10 +59,11 @@ var bot = new builder.UniversalBot(connector, [
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
     function (session, args) {
+        doSentimentAnalysis('alef');
         if (args && args.reprompt)
             builder.Prompts.text(session, "Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.");
         else
-            builder.Prompts.text(session, "Qual é o código de rastreio ?");
+            builder.Prompts.text(session, "Me diga qual é o código de rastreio ?");
     },
     function (session, results) {
         var _code = results.response.trim();
@@ -78,14 +80,8 @@ bot.dialog('askForTrackingCode', [
     .endConversationAction(
     "endTrackingCode", "Opa, é nois.",
     {
-        matches: /^tchau$|^xau$/i
+        matches: /^tchau$|^xau$|^sair&/i
     });
-
-// Context Help dialog for party size
-// bot.dialog('trackingCodeHelp', function (session, args, next) {
-//     var msg = "Código do rastreio de até 13 digitos.";
-//     session.endDialog(msg);
-// });
 
 // Add dialog to return list of shirts available
 bot.dialog('trackingInfo', function (session, args) {
@@ -104,3 +100,34 @@ bot.dialog('trackingInfo', function (session, args) {
     // ]));
     session.send(msg).endConversation();
 });
+
+//Método que verifica o sentimento da pessoa através da mensagem
+var doSentimentAnalysis = (message) => {
+    var _url = 'https://brazilsouth.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment';
+
+    axios.post(_url, {
+        "documents": [
+            {
+                "language": "pt",
+                "id": "message",
+                "text": "eu adorei"
+            }
+        ]
+    }, {
+            headers: { 'Ocp-Apim-Subscription-Key': 'ee512087764c49308d461b35a1c22df5' }
+        })
+        .then(function (response) {
+            var _result = response.data;
+
+            if (_result.errors.lenght == 0){
+
+            }
+            else{
+                
+            }
+            console.log();
+        })
+        .catch(function (error) {
+            //
+        });
+};
