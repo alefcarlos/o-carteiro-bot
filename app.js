@@ -107,21 +107,23 @@ bot.dialog('finishingTalk', [
     function (session, results) {
         var _msg = results.response;
 
-        doSentimentAnalysis(session, _msg);
-        session.endConversation();
+        doSentimentAnalysis(session, _msg, () => {
+            session.endConversation();
+        });
     }
 ]);
 
 //Método que verifica o sentimento da pessoa através da mensagem
 //TODO: Fazer esse metodo ser parte do dilogo ou promise
-var doSentimentAnalysis = (session, message) => {
+var doSentimentAnalysis = (session, message, callback) => {
     var _url = process.env.TextAnalyticsUrl;
 
     if (!_url) {
         session.send('Obrigado pela resposta ;)');
-        session.endConversation();
+        callback();
     } else {
 
+        session.sendTyping();
         axios.post(process.env.TextAnalyticsUrl, {
             "documents": [
                 {
@@ -139,10 +141,10 @@ var doSentimentAnalysis = (session, message) => {
                 if (_result.errors.length === 0) {
                     var _sentimentScore = _result.documents[0].score;
                     var _responseMessage = '';
-                    if (_sentimentScore <= 1 && _sentimentScore > 0.9) {
+                    if (_sentimentScore <= 1 && _sentimentScore > 0.7) {
                         responseMessage = "Você é fera!!! Muito obrigado pelo feedback. *-*";
                     }
-                    else if (_sentimentScore <= 0.9 && _sentimentScore > 0.4) {
+                    else if (_sentimentScore <= 0.7 && _sentimentScore > 0.4) {
                         _responseMessage = "Foi muito bom te ouvir, estou sempre melhorando !";
                     }
                     else {
@@ -154,9 +156,12 @@ var doSentimentAnalysis = (session, message) => {
                 else {
                     session.send('Obrigado pela resposta ;)');
                 }
+
+                callback();
             })
             .catch(() => {
                 session.send('Obrigado pela resposta ;)');
+                callback();
             });
     }
 };
