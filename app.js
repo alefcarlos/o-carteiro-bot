@@ -24,13 +24,13 @@ var inMemoryStorage = new builder.MemoryBotStorage();
 // Um bot que obtém o rastreio de um item no correios
 var bot = new builder.UniversalBot(connector, [
     function (session) {
-        session.send('Olá, eu sou O Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
+        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.beginDialog('askForTrackingCode');
     },
     function (session, results) {
         session.dialogData.trackingCode = results.response.code;
         var _msg = `Aguarde um momento enquanto busco as informações do código ${session.dialogData.trackingCode}`;
-        session.say(_msg);
+        session.send(_msg);
 
         session.sendTyping();
 
@@ -47,8 +47,7 @@ var bot = new builder.UniversalBot(connector, [
             }
             else {
                 session.beginDialog('trackingInfo', { data: result[0] });
-                // var _evento = result[0].evento[0];
-                // msg = `Obtive as informações com sucesso, a última atualização é ${_evento.descricao}`;
+                session.beginDialog('finishingTalk');
             }
         }).catch((err) => {
             session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
@@ -59,9 +58,9 @@ var bot = new builder.UniversalBot(connector, [
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
     function (session, args) {
-        doSentimentAnalysis('alef');
+        // doSentimentAnalysis('alef');
         if (args && args.reprompt)
-            builder.Prompts.text(session, "Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.");
+            builder.Prompts.text(session, "Desculpe, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.");
         else
             builder.Prompts.text(session, "Me diga qual é o código de rastreio ?");
     },
@@ -83,7 +82,7 @@ bot.dialog('askForTrackingCode', [
         matches: /^tchau$|^xau$|^sair&/i
     });
 
-// Add dialog to return list of shirts available
+// Diálogo que mostra o resultado da pesquisa
 bot.dialog('trackingInfo', function (session, args) {
     var msg = new builder.Message(session);
     var _data = args.data;
@@ -98,36 +97,66 @@ bot.dialog('trackingInfo', function (session, args) {
     // .buttons([
     //     builder.CardAction.imBack(session, "buy classic white t-shirt", "Buy")
     // ]));
-    session.send(msg).endConversation();
+    session.send(msg).endDialog();
 });
 
+bot.dialog('finishingTalk', [
+    function (session) {
+        builder.Prompts.text(session, "Agora me diga, fui util à você ?");
+    },
+    function (session, results) {
+        var _msg = results.response;
+
+        doSentimentAnalysis(session, _msg);
+        session.endConversation();
+    }
+]);
+
 //Método que verifica o sentimento da pessoa através da mensagem
-var doSentimentAnalysis = (message) => {
-    var _url = 'https://brazilsouth.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment';
+//TODO: Fazer esse metodo ser parte do dilogo ou promise
+var doSentimentAnalysis = (session, message) => {
+    var _url = process.env.TextAnalyticsUrl;
 
-    axios.post(_url, {
-        "documents": [
-            {
-                "language": "pt",
-                "id": "message",
-                "text": "eu adorei"
-            }
-        ]
-    }, {
-            headers: { 'Ocp-Apim-Subscription-Key': 'ee512087764c49308d461b35a1c22df5' }
-        })
-        .then(function (response) {
-            var _result = response.data;
+    if (!_url) {
+        session.send('Obrigado pela resposta ;)');
+        session.endConversation();
+    } else {
 
-            if (_result.errors.lenght == 0){
+        axios.post(process.env.TextAnalyticsUrl, {
+            "documents": [
+                {
+                    "language": "pt",
+                    "id": "message",
+                    "text": message
+                }
+            ]
+        }, {
+                headers: { 'Ocp-Apim-Subscription-Key': process.env.TextAnalyticKey }
+            })
+            .then((response) => {
+                var _result = response.data;
 
-            }
-            else{
-                
-            }
-            console.log();
-        })
-        .catch(function (error) {
-            //
-        });
+                if (_result.errors.length === 0) {
+                    var _sentimentScore = _result.documents[0].score;
+                    var _responseMessage = '';
+                    if (_sentimentScore <= 1 && _sentimentScore > 0.9) {
+                        responseMessage = "Você é fera!!! Muito obrigado pelo feedback. *-*";
+                    }
+                    else if (_sentimentScore <= 0.9 && _sentimentScore > 0.4) {
+                        _responseMessage = "Foi muito bom te ouvir, estou sempre melhorando !";
+                    }
+                    else {
+                        _responseMessage = "Peço desculpa se não fui últil, estarei melhorando minhas buscas ! :'(";
+                    }
+
+                    session.send(_responseMessage);
+                }
+                else {
+                    session.send('Obrigado pela resposta ;)');
+                }
+            })
+            .catch(() => {
+                session.send('Obrigado pela resposta ;)');
+            });
+    }
 };
