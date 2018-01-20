@@ -10,6 +10,8 @@ const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesC
 const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 const azure = require('botbuilder-azure');
 
+const logic = require('./carteiro-logic.js');
+
 // Setup Restify Server
 const server = restify.createServer();
 
@@ -31,32 +33,6 @@ const connector = new builder.ChatConnector({
     appPassword: process.env.MicrosoftAppPassword,
     openIdMetadata: process.env.BotOpenIdMetadata
 });
-
-//Lista de tipos e status que definem um objeto como entregue ao usuário
-const tracakingFinishedList = [{
-    type: 'BDE',
-    status: 0
-},
-{
-    type: 'BDE',
-    status: 1
-},
-{
-    type: 'BDI',
-    status: 0
-},
-{
-    type: 'BDI',
-    status: 1
-},
-{
-    type: 'BDR',
-    status: 0
-},
-{
-    type: 'BDR',
-    status: 1
-}];
 
 // Objetos de conexão
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
@@ -152,7 +128,7 @@ bot.dialog('askForTrackingCode', [
         //e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
         let _isTrackingFinished = session.userData.trackingHistory.findIndex((element) => {
 
-            return element.trackingCode === _code && tracakingFinishedList.some((seachElement) => {
+            return element.trackingCode === _code && logic.tracakingFinishedList.some((seachElement) => {
                 return parseInt(seachElement.status) === parseInt(element.lastStatus) && seachElement.type === element.lastType;
             });
 
