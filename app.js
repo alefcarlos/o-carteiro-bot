@@ -31,10 +31,10 @@ const inMemoryStorage = new builder.MemoryBotStorage();
 // Um bot que obtém o rastreio de um item no correios
 const bot = new builder.UniversalBot(connector, [
     function (session) {
-        builder.Prompts.text(session, 'Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;) <br /> E qual seu nome ?');
+        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
+        session.beginDialog('recognizerUser');
     },
     function (session, results) {
-        session.userData.userName = results.response.trim();
         session.beginDialog('askForTrackingCode');
     },
     function (session, results) {
@@ -63,7 +63,31 @@ const bot = new builder.UniversalBot(connector, [
             session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
         });
     }
-]).set('storage', inMemoryStorage); // Register in-memory storage 
+])
+    .endConversationAction(
+    "endTrackingCode", "Até o próximo rastreio !",
+    {
+        matches: /^tchau$|^xau$|^sair&/i
+    })
+    .set('storage', inMemoryStorage); // Register in-memory storage 
+
+bot.dialog('recognizerUser', [
+    function (session) {
+        //Verificar usuário
+        let _user = session.userData.userName;
+
+        if (_user) {
+            session.endDialogWithResult({ response: _user });
+        }
+        else {
+            builder.Prompts.text(session, 'E qual seu nome ?');
+        }
+    },
+    function (session, results) {
+        session.userData.userName = results.response.trim();
+        session.endDialog();
+    }
+]);
 
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
@@ -84,12 +108,7 @@ bot.dialog('askForTrackingCode', [
         else
             session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
     }
-])
-    .endConversationAction(
-    "endTrackingCode", "Até o próximo rastreio !",
-    {
-        matches: /^tchau$|^xau$|^sair&/i
-    });
+]);
 
 // Diálogo que mostra o resultado da pesquisa
 bot.dialog('trackingInfo', function (session, args) {
