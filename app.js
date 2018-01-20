@@ -1,5 +1,7 @@
 'use strict';
 
+/*eslint no-console: ["error", { allow: ["warn","log"] }] */
+
 const restify = require('restify');
 const builder = require('botbuilder');
 const trackingCorreios = require('tracking-correios');
@@ -29,7 +31,10 @@ const inMemoryStorage = new builder.MemoryBotStorage();
 // Um bot que obtém o rastreio de um item no correios
 const bot = new builder.UniversalBot(connector, [
     function (session) {
-        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
+        builder.Prompts.text(session, 'Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;) <br /> E qual seu nome ?');
+    },
+    function (session, results) {
+        session.userData.userName = results.response.trim();
         session.beginDialog('askForTrackingCode');
     },
     function (session, results) {
@@ -54,7 +59,7 @@ const bot = new builder.UniversalBot(connector, [
                 session.beginDialog('trackingInfo', { data: result[0] });
                 session.beginDialog('finishingTalk');
             }
-        }).catch((err) => {
+        }).catch(() => {
             session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
         });
     }
@@ -63,11 +68,10 @@ const bot = new builder.UniversalBot(connector, [
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
     function (session, args) {
-        // doSentimentAnalysis('alef');
         if (args && args.reprompt)
-            builder.Prompts.text(session, "Desculpe, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.");
+            builder.Prompts.text(session, `${session.userData.userName}, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.`);
         else
-            builder.Prompts.text(session, "Me diga qual é o código de rastreio ?");
+            builder.Prompts.text(session, `Agora que já nos conhecemo ${session.userData.userName}, me diga qual é o código você gostaria de rastrear ?`);
     },
     function (session, results) {
         const _code = results.response.trim();
@@ -82,7 +86,7 @@ bot.dialog('askForTrackingCode', [
     }
 ])
     .endConversationAction(
-    "endTrackingCode", "Opa, é nois.",
+    "endTrackingCode", "Até o próximo rastreio !",
     {
         matches: /^tchau$|^xau$|^sair&/i
     });
@@ -107,7 +111,7 @@ bot.dialog('trackingInfo', function (session, args) {
 
 bot.dialog('finishingTalk', [
     function (session) {
-        builder.Prompts.text(session, "Agora me diga, fui util à você ?");
+        builder.Prompts.text(session, `${session.userData.userName}, fui util à você ?`);
     },
     function (session, results) {
         const _msg = results.response;
@@ -137,9 +141,9 @@ bot.dialog('finishingTalk', [
             let _responseMessage = '';
             if (result.errors.length === 0) {
                 const _sentimentScore = result.documents[0].score;
-                
+
                 if (_sentimentScore <= 1 && _sentimentScore > 0.7) {
-                    _responseMessage = "Você é fera!!! Muito obrigado pelo feedback. *-*";
+                    _responseMessage = "Você é fera!!! Muito obrigado pelo feedback. ;)";
                 }
                 else if (_sentimentScore <= 0.7 && _sentimentScore > 0.4) {
                     _responseMessage = "Foi muito bom te ouvir, estou sempre melhorando !";
