@@ -118,7 +118,7 @@ module.exports = {
             "error",
             "separate-lines"
         ],
-        "multiline-ternary": "error",
+        "multiline-ternary": "never",
         "new-cap": "error",
         "new-parens": "error",
         "newline-after-var": "off",
@@ -195,7 +195,7 @@ module.exports = {
         "no-sync": "error",
         "no-tabs": "error",
         "no-template-curly-in-string": "error",
-        "no-ternary": "error",
+        "no-ternary": "off",
         "no-throw-literal": "error",
         "no-trailing-spaces": [
             "error",
