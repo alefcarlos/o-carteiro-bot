@@ -11,6 +11,7 @@
   "dependencies": {
     "azure-cognitiveservices-textanalytics": "^1.0.0-preview",
     "botbuilder": "^3.13.1",
+    "botbuilder-azure": "^3.0.4",
     "ms-rest-azure": "^2.5.0",
     "restify": "^6.3.4",
     "tracking-correios": "^1.1.6"

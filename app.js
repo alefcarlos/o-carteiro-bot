@@ -8,6 +8,7 @@ const trackingCorreios = require('tracking-correios');
 
 const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesCredentials;
 const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
+const azure = require('botbuilder-azure');
 
 // Setup Restify Server
 const server = restify.createServer();
@@ -16,6 +17,13 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
     console.log('%s listening to %s', server.name, server.url);
 });
 
+const documentDbOptions = {
+    host: process.env.AzureDocumentDBURI,
+    masterKey: process.env.AzureDocumentDBKey,
+    database: 'botdocs',
+    collection: 'carteirobot-data'
+};
+
 // Create chat connector for communicating with the Bot Framework Service
 const connector = new builder.ChatConnector({
     appId: process.env.MicrosoftAppId,
@@ -23,10 +31,14 @@ const connector = new builder.ChatConnector({
     openIdMetadata: process.env.BotOpenIdMetadata
 });
 
+const docDbClient = new azure.DocumentDbClient(documentDbOptions);
+
+const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
+
 // Listen for messages from users 
 server.post('/api/messages', connector.listen());
 
-const inMemoryStorage = new builder.MemoryBotStorage();
+// const inMemoryStorage = new builder.MemoryBotStorage();
 
 // Um bot que obtém o rastreio de um item no correios
 const bot = new builder.UniversalBot(connector, [
@@ -69,7 +81,7 @@ const bot = new builder.UniversalBot(connector, [
     {
         matches: /^tchau$|^xau$|^sair&/i
     })
-    .set('storage', inMemoryStorage); // Register in-memory storage 
+    .set('storage', cosmosStorage); // Register in-memory storage 
 
 bot.dialog('recognizerUser', [
     function (session) {
