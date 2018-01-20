@@ -32,6 +32,32 @@ const connector = new builder.ChatConnector({
     openIdMetadata: process.env.BotOpenIdMetadata
 });
 
+//Lista de tipos e status que definem um objeto como entregue ao usuário
+const tracakingFinishedList = [{
+    type: 'BDE',
+    status: 0
+},
+{
+    type: 'BDE',
+    status: 1
+},
+{
+    type: 'BDI',
+    status: 0
+},
+{
+    type: 'BDI',
+    status: 1
+},
+{
+    type: 'BDR',
+    status: 0
+},
+{
+    type: 'BDR',
+    status: 1
+}];
+
 // Objetos de conexão
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
 const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
@@ -84,7 +110,7 @@ const bot = new builder.UniversalBot(connector, [
     .endConversationAction(
     "endTrackingCode", "Até o próximo rastreio !",
     {
-        matches: /^tchau$|^xau$|^sair&/i
+        matches: /^tchau$|^xau$|^sair$/i
     })
     .set('storage', usedStorage);
 
@@ -102,6 +128,8 @@ bot.dialog('recognizerUser', [
     },
     function (session, results) {
         session.userData.userName = results.response.trim();
+        session.userData.trackingHistory = [];
+
         session.endDialog();
     }
 ]);
@@ -120,18 +148,40 @@ bot.dialog('askForTrackingCode', [
         //Verifica se o código passado é válido para requisição
         const _isCodeValid = trackingCorreios.isValid(_code);
 
-        if (_isCodeValid)
-            session.endDialogWithResult({ response: { code: _code, category: trackingCorreios.category(_code) } });
-        else
-            session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
+        //Código existe no histórico de pesquisa do usuário
+        //e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
+        let _isTrackingFinished = session.userData.trackingHistory.findIndex((element) => {
+
+            return element.trackingCode === _code && tracakingFinishedList.some((seachElement) => {
+                return parseInt(seachElement.status) === parseInt(element.lastStatus) && seachElement.type === element.lastType;
+            });
+
+        });
+
+        if (_isTrackingFinished >= 0)
+            session.replaceDialog('showTrackingFinished', { trackingCode: _code });
+        else {
+            if (_isCodeValid)
+                session.endDialogWithResult({ response: { code: _code, category: trackingCorreios.category(_code) } });
+            else
+                session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
+        }
     }
 ]);
+
+bot.dialog('showTrackingFinished', function (session, args) {
+    session.send(`De acordo com seu histórico de rastreio, o item ${args.trackingCode} já consta como entregue ;)`);
+    session.beginDialog('finishingTalk');
+});
 
 // Diálogo que mostra o resultado da pesquisa
 bot.dialog('trackingInfo', function (session, args) {
     const msg = new builder.Message(session);
     const _data = args.data;
     const _lastEvent = _data.evento[0];
+
+    //Armazenar informações do rastreio do usuário
+    addUserTrackingHistory(session, _data);
 
     msg.addAttachment(new builder.HeroCard(session)
         .title("Informações do rastreio")
@@ -145,6 +195,7 @@ bot.dialog('trackingInfo', function (session, args) {
     session.send(msg).endDialog();
 });
 
+//Após a exibição do resultado da busca, devemos perguntar o que ele achou do nosso serviço
 bot.dialog('finishingTalk', [
     function (session) {
         builder.Prompts.text(session, `${session.userData.userName}, fui util à você ?`);
@@ -201,3 +252,39 @@ bot.dialog('finishingTalk', [
 
     }
 ]);
+
+/**
+ * Adiciona um registro no histórico do usuário
+ * @param {*} session 
+ * @param {*} info Informações do rastreio
+ */
+let addUserTrackingHistory = function (session, info) {
+    var _lastEvent = info.evento[0];
+
+    //Verifica se existe já existe o código, então atualizar somente os status
+    let _trackingUpdateIndex = session.userData.trackingHistory.findIndex((element) => {
+        return element.trackingCode === info.numero;
+    });
+
+    if (_trackingUpdateIndex == -1) {
+
+        var _newHistory = {
+            trackingCode: info.numero,
+            trackingCategory: info.categoria,
+            lastType: _lastEvent.tipo,
+            lastStatus: _lastEvent.status,
+            lastDescription: _lastEvent.descricao,
+            trackingTime: new Date().toISOString()
+        };
+
+        session.userData.trackingHistory.push(_newHistory);
+    }
+    else {
+        var _entityToUpdate = session.userData.trackingHistory[_trackingUpdateIndex];
+
+        _entityToUpdate.lastType = _lastEvent.tipo;
+        _entityToUpdate.lastStatus = _lastEvent.status;
+        _entityToUpdate.lastDescription = _lastEvent.descricao;
+        _entityToUpdate.trackingTime = new Date().toISOString();
+    }
+};
