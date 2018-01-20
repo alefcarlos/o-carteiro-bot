@@ -13,7 +13,7 @@
     "botbuilder": "^3.13.1",
     "ms-rest-azure": "^2.5.0",
     "restify": "^6.3.4",
-    "tracking-correios": "^1.1.5"
+    "tracking-correios": "^1.1.6"
   },
   "devDependencies": {
     "request": "^2.81.0",
