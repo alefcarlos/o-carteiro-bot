@@ -1,13 +1,19 @@
+# o-carteiro-bot
+
 > O Carteiro é feito utilizando [Bot Framework](https://docs.microsoft.com/pt-br/bot-framework/nodejs/bot-builder-nodejs-overview) da Microsoft, durante a Maratona Bots
 
 O Carteiro ajuda a rastrear objetos dos Correios a partir de códigos de rastreio
 
-Pré-requisitos
+>Teste-o nos canais abaixo:
+
+[![Testar](https://telegram.org/img/tgme/LogoBig_1x.png "Testar no Telegram")](https://telegram.me/ocarteirobot)
+
+## Pré-requisitos
 
 1. Node
 2. [Bot Emulator](https://github.com/Microsoft/BotFramework-Emulator/releases)
 
-Como rodar ?
+## Como rodar ?
 
 Após clonar o repositório, fazer download das dependências
 

@@ -17,6 +17,7 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
     console.log('%s listening to %s', server.name, server.url);
 });
 
+// Configurações de conexão ao CosmosDB
 const documentDbOptions = {
     host: process.env.AzureDocumentDBURI,
     masterKey: process.env.AzureDocumentDBKey,
@@ -31,14 +32,18 @@ const connector = new builder.ChatConnector({
     openIdMetadata: process.env.BotOpenIdMetadata
 });
 
+// Objetos de conexão
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
-
 const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
 // Listen for messages from users 
 server.post('/api/messages', connector.listen());
 
-// const inMemoryStorage = new builder.MemoryBotStorage();
+// Se tiver em modo dev, usar in-memory
+const inMemoryStorage = new builder.MemoryBotStorage();
+
+// Validar se estamos em modo dev
+const usedStorage = (process.env.BotEnv == 'prod') ? cosmosStorage : inMemoryStorage;
 
 // Um bot que obtém o rastreio de um item no correios
 const bot = new builder.UniversalBot(connector, [
@@ -81,7 +86,7 @@ const bot = new builder.UniversalBot(connector, [
     {
         matches: /^tchau$|^xau$|^sair&/i
     })
-    .set('storage', cosmosStorage); // Register in-memory storage 
+    .set('storage', usedStorage);
 
 bot.dialog('recognizerUser', [
     function (session) {
