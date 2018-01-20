@@ -1,16 +1,21 @@
-var restify = require('restify');
-var builder = require('botbuilder');
-var trackingCorreios = require('tracking-correios');
-var axios = require('axios');
+'use strict';
+
+const restify = require('restify');
+const builder = require('botbuilder');
+const trackingCorreios = require('tracking-correios');
+
+const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesCredentials;
+const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 
 // Setup Restify Server
-var server = restify.createServer();
+const server = restify.createServer();
+
 server.listen(process.env.port || process.env.PORT || 3978, function () {
     console.log('%s listening to %s', server.name, server.url);
 });
 
 // Create chat connector for communicating with the Bot Framework Service
-var connector = new builder.ChatConnector({
+const connector = new builder.ChatConnector({
     appId: process.env.MicrosoftAppId,
     appPassword: process.env.MicrosoftAppPassword,
     openIdMetadata: process.env.BotOpenIdMetadata
@@ -19,31 +24,31 @@ var connector = new builder.ChatConnector({
 // Listen for messages from users 
 server.post('/api/messages', connector.listen());
 
-var inMemoryStorage = new builder.MemoryBotStorage();
+const inMemoryStorage = new builder.MemoryBotStorage();
 
 // Um bot que obtém o rastreio de um item no correios
-var bot = new builder.UniversalBot(connector, [
+const bot = new builder.UniversalBot(connector, [
     function (session) {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.beginDialog('askForTrackingCode');
     },
     function (session, results) {
         session.dialogData.trackingCode = results.response.code;
-        var _msg = `Aguarde um momento enquanto busco as informações do código ${session.dialogData.trackingCode}`;
+        let _msg = `Aguarde um momento enquanto busco as informações do código ${session.dialogData.trackingCode}`;
         session.send(_msg);
 
         session.sendTyping();
 
         trackingCorreios.track(session.dialogData.trackingCode).then((result) => {
-            var msg = '';
+            _msg = '';
 
             if (result === null || result.lenght === 0) {
-                msg = 'Desculpe-me, mas ainda não foram encontradas informações com esse código';
-                session.endConversation(msg);
+                _msg = 'Desculpe-me, mas ainda não foram encontradas informações com esse código';
+                session.endConversation(_msg);
             }
             else if (result && result[0].erro) {
-                msg = `Desculpe-me, mas não foram encontradas informações do pedido, pois ${result[0].erro.toLocaleLowerCase()}`;
-                session.endConversation(msg);
+                _msg = `Desculpe-me, mas não foram encontradas informações do pedido, pois ${result[0].erro.toLocaleLowerCase()}`;
+                session.endConversation(_msg);
             }
             else {
                 session.beginDialog('trackingInfo', { data: result[0] });
@@ -65,10 +70,10 @@ bot.dialog('askForTrackingCode', [
             builder.Prompts.text(session, "Me diga qual é o código de rastreio ?");
     },
     function (session, results) {
-        var _code = results.response.trim();
+        const _code = results.response.trim();
 
         //Verifica se o código passado é válido para requisição
-        var _isCodeValid = trackingCorreios.isValid(_code);
+        const _isCodeValid = trackingCorreios.isValid(_code);
 
         if (_isCodeValid)
             session.endDialogWithResult({ response: { code: _code, category: trackingCorreios.category(_code) } });
@@ -84,9 +89,9 @@ bot.dialog('askForTrackingCode', [
 
 // Diálogo que mostra o resultado da pesquisa
 bot.dialog('trackingInfo', function (session, args) {
-    var msg = new builder.Message(session);
-    var _data = args.data;
-    var _lastEvent = _data.evento[0];
+    const msg = new builder.Message(session);
+    const _data = args.data;
+    const _lastEvent = _data.evento[0];
 
     msg.addAttachment(new builder.HeroCard(session)
         .title("Informações do rastreio")
@@ -105,63 +110,54 @@ bot.dialog('finishingTalk', [
         builder.Prompts.text(session, "Agora me diga, fui util à você ?");
     },
     function (session, results) {
-        var _msg = results.response;
-
-        doSentimentAnalysis(session, _msg, () => {
-            session.endConversation();
-        });
-    }
-]);
-
-//Método que verifica o sentimento da pessoa através da mensagem
-//TODO: Fazer esse metodo ser parte do dilogo ou promise
-var doSentimentAnalysis = (session, message, callback) => {
-    var _url = process.env.TextAnalyticsUrl;
-
-    if (!_url) {
-        session.send('Obrigado pela resposta ;)');
-        callback();
-    } else {
+        const _msg = results.response;
 
         session.sendTyping();
-        axios.post(process.env.TextAnalyticsUrl, {
-            "documents": [
+
+        // Creating the Cognitive Services credentials
+        // This requires a key corresponding to the service being used (i.e. text-analytics, etc)
+        let _credentials = new CognitiveServicesCredentials(process.env.TextAnalyticKey);
+
+        //Fazer requisição da análise de sentimento da opnião do serviço
+        let _client = new TextAnalyticsAPIClient(_credentials, 'brazilsouth');
+        let _input = {
+            documents: [
                 {
                     "language": "pt",
                     "id": "message",
-                    "text": message
+                    'text': _msg
                 }
             ]
-        }, {
-                headers: { 'Ocp-Apim-Subscription-Key': process.env.TextAnalyticKey }
-            })
-            .then((response) => {
-                var _result = response.data;
+        };
 
-                if (_result.errors.length === 0) {
-                    var _sentimentScore = _result.documents[0].score;
-                    var _responseMessage = '';
-                    if (_sentimentScore <= 1 && _sentimentScore > 0.7) {
-                        responseMessage = "Você é fera!!! Muito obrigado pelo feedback. *-*";
-                    }
-                    else if (_sentimentScore <= 0.7 && _sentimentScore > 0.4) {
-                        _responseMessage = "Foi muito bom te ouvir, estou sempre melhorando !";
-                    }
-                    else {
-                        _responseMessage = "Peço desculpa se não fui últil, estarei melhorando minhas buscas ! :'(";
-                    }
+        //Validar score da análise e então responder.
+        let _operation = _client.sentiment(_input);
+        _operation.then(function (result) {
 
-                    session.send(_responseMessage);
+            let _responseMessage = '';
+            if (result.errors.length === 0) {
+                const _sentimentScore = result.documents[0].score;
+                
+                if (_sentimentScore <= 1 && _sentimentScore > 0.7) {
+                    _responseMessage = "Você é fera!!! Muito obrigado pelo feedback. *-*";
+                }
+                else if (_sentimentScore <= 0.7 && _sentimentScore > 0.4) {
+                    _responseMessage = "Foi muito bom te ouvir, estou sempre melhorando !";
                 }
                 else {
-                    session.send('Obrigado pela resposta ;)');
+                    _responseMessage = "Peço desculpa se não fui últil, estarei melhorando minhas buscas ! :'(";
                 }
+            }
+            else {
+                _responseMessage = 'Obrigado pela resposta ;)';
+            }
 
-                callback();
-            })
-            .catch(() => {
-                session.send('Obrigado pela resposta ;)');
-                callback();
-            });
+            session.endConversation(_responseMessage);
+
+        }).catch(function (err) {
+            console.log(err);
+            session.send('Obrigado pela resposta ;)');
+        });
+
     }
-};
+]);

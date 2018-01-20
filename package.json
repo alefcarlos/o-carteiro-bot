@@ -9,8 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.17.1",
+    "azure-cognitiveservices-textanalytics": "^1.0.0-preview",
     "botbuilder": "^3.13.1",
+    "ms-rest-azure": "^2.5.0",
     "restify": "^6.3.4",
     "tracking-correios": "^1.1.5"
   },
