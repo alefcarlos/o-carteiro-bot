@@ -150,13 +150,12 @@ bot.dialog('seeTrackingHistory', [
                     session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
                 ));
 
-            session.send(msg);
+            session.send(msg).endDialog();
         }
         else {
             session.send(buildHistoryList(session));
+            session.beginDialog('mainMenu').endDialog();
         }
-
-        session.beginDialog('mainMenu').endDialog();
     }
 ]).triggerAction({
     matches: /^ver histórico$/i
