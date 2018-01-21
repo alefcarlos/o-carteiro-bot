@@ -131,10 +131,10 @@ bot.dialog('askForTrackingCode', [
 bot.dialog('seeTrackingHistory', [
     function (session) {
         if (session.userData.trackingHistory.length === 0) {
-            session.send('Você ainda não rastreou nenhum item, digite rastrear para começar agora ;)').endDialog();
+            session.send('Você ainda não rastreou nenhum item, digite rastrear para começar agora ;)').endConversation();
         }
         else {
-            session.send(buildHistoryList(session)).endDialog();
+            session.send(buildHistoryList(session)).endConversation();
         }
     }
 ]).triggerAction({
