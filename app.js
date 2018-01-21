@@ -52,18 +52,7 @@ const bot = new builder.UniversalBot(connector, [
     function (session) {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.beginDialog('recognizerUser');
-    },
-    function (session, results) {
-        const msg = new builder.Message(session)
-            .text(`${session.userData.userName}, o que você gostaria de fazer ?`)
-            .suggestedActions(
-            builder.SuggestedActions.create(
-                session, [
-                    builder.CardAction.imBack(session, "rastrear", "Rastrear"),
-                    builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
-                ]
-            ));
-        session.send(msg);
+        session.beginDialog('mainMenu');
     }
 ]).endConversationAction(
     "endTrackingCode", "Até o próximo rastreio !",
@@ -71,6 +60,20 @@ const bot = new builder.UniversalBot(connector, [
         matches: /^tchau$|^xau$|^sair$/i
     })
     .set('storage', usedStorage);
+
+//Diálogo menu principal
+bot.dialog('mainMenu', function (session) {
+    const msg = new builder.Message(session)
+        .text(`${session.userData.userName}, o que você gostaria de fazer ?`)
+        .suggestedActions(
+        builder.SuggestedActions.create(
+            session, [
+                builder.CardAction.imBack(session, "rastrear", "Rastrear"),
+                builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
+            ]
+        ));
+    session.send(msg);
+});
 
 //Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
@@ -146,12 +149,14 @@ bot.dialog('seeTrackingHistory', [
                 builder.SuggestedActions.create(
                     session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
                 ));
-                
-            session.send(msg).endConversation();
+
+            session.send(msg);
         }
         else {
-            session.send(buildHistoryList(session)).endConversation();
+            session.send(buildHistoryList(session));
         }
+
+        session.beginDialog('mainMenu').endDialog();
     }
 ]).triggerAction({
     matches: /^ver histórico$/i
