@@ -2,10 +2,10 @@
   "name": "echo-bot",
   "version": "1.0.0",
   "description": "Um bot que ecoa o que o usuário digitou",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.js"
+    "start": "node src/app.js"
   },
   "author": "",
   "license": "ISC",

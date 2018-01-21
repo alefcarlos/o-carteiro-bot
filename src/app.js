@@ -10,6 +10,8 @@ const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesC
 const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 const azure = require('botbuilder-azure');
 
+const carteiroUtils = require('./carteiro-utils.js');
+
 // Setup Restify Server
 const server = restify.createServer();
 
@@ -32,32 +34,6 @@ const connector = new builder.ChatConnector({
     openIdMetadata: process.env.BotOpenIdMetadata
 });
 
-//Lista de tipos e status que definem um objeto como entregue ao usuário
-const tracakingFinishedList = [{
-    type: 'BDE',
-    status: 0
-},
-{
-    type: 'BDE',
-    status: 1
-},
-{
-    type: 'BDI',
-    status: 0
-},
-{
-    type: 'BDI',
-    status: 1
-},
-{
-    type: 'BDR',
-    status: 0
-},
-{
-    type: 'BDR',
-    status: 1
-}];
-
 // Objetos de conexão
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
 const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
@@ -69,7 +45,7 @@ server.post('/api/messages', connector.listen());
 const inMemoryStorage = new builder.MemoryBotStorage();
 
 // Validar se estamos em modo dev
-const usedStorage = (process.env.BotEnv == 'prod') ? cosmosStorage : inMemoryStorage;
+const usedStorage = process.env.BotEnv === 'prod' ? cosmosStorage : inMemoryStorage;
 
 // Um bot que obtém o rastreio de um item no correios
 const bot = new builder.UniversalBot(connector, [
@@ -78,42 +54,25 @@ const bot = new builder.UniversalBot(connector, [
         session.beginDialog('recognizerUser');
     },
     function (session, results) {
-        session.beginDialog('askForTrackingCode');
-    },
-    function (session, results) {
-        session.dialogData.trackingCode = results.response.code;
-        let _msg = `Aguarde um momento enquanto busco as informações do código ${session.dialogData.trackingCode}`;
-        session.send(_msg);
-
-        session.sendTyping();
-
-        trackingCorreios.track(session.dialogData.trackingCode).then((result) => {
-            _msg = '';
-
-            if (result === null || result.lenght === 0) {
-                _msg = 'Desculpe-me, mas ainda não foram encontradas informações com esse código';
-                session.endConversation(_msg);
-            }
-            else if (result && result[0].erro) {
-                _msg = `Desculpe-me, mas não foram encontradas informações do pedido, pois ${result[0].erro.toLocaleLowerCase()}`;
-                session.endConversation(_msg);
-            }
-            else {
-                session.beginDialog('trackingInfo', { data: result[0] });
-                session.beginDialog('finishingTalk');
-            }
-        }).catch(() => {
-            session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
-        });
+        const msg = new builder.Message(session)
+            .text(`${session.userData.userName}, o que você gostaria de fazer ?`)
+            .suggestedActions(
+            builder.SuggestedActions.create(
+                session, [
+                    builder.CardAction.imBack(session, "rastrear", "Rastrear item"),
+                    builder.CardAction.imBack(session, "ver historico", "Ver histórico")
+                ]
+            ));
+        session.send(msg);
     }
-])
-    .endConversationAction(
+]).endConversationAction(
     "endTrackingCode", "Até o próximo rastreio !",
     {
         matches: /^tchau$|^xau$|^sair$/i
     })
     .set('storage', usedStorage);
 
+//Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
     function (session) {
         //Verificar usuário
@@ -148,26 +107,62 @@ bot.dialog('askForTrackingCode', [
         //Verifica se o código passado é válido para requisição
         const _isCodeValid = trackingCorreios.isValid(_code);
 
-        //Código existe no histórico de pesquisa do usuário
-        //e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
-        let _isTrackingFinished = session.userData.trackingHistory.findIndex((element) => {
+        if (!_isCodeValid) {
+            session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
 
-            return element.trackingCode === _code && tracakingFinishedList.some((seachElement) => {
-                return parseInt(seachElement.status) === parseInt(element.lastStatus) && seachElement.type === element.lastType;
-            });
+            return;
+        }
 
-        });
+        //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
+        const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, _code);
 
-        if (_isTrackingFinished >= 0)
+        if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
             session.replaceDialog('showTrackingFinished', { trackingCode: _code });
+        }
         else {
-            if (_isCodeValid)
-                session.endDialogWithResult({ response: { code: _code, category: trackingCorreios.category(_code) } });
-            else
-                session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
+            requestTracking(session, _code);
         }
     }
-]);
+]).triggerAction({
+    matches: /^rastrear$/i
+});
+
+//Diálogo para mostrar os itens do histórico do usuário
+bot.dialog('seeTrackingHistory', [
+    function (session) {
+        if (session.userData.trackingHistory.length === 0) {
+            session.send('Você ainda não rastreou nenhum item, digite rastrear para começar agora ;)').endDialog();
+        }
+        else {
+            session.send(buildHistoryList(session)).endDialog();
+        }
+    }
+]).triggerAction({
+    matches: /^ver historico$/i
+});
+
+let buildHistoryList = (session) => {
+    const _msg = new builder.Message(session);
+
+    let _element = null;
+    let card = null;
+
+    for (let index = 0; index < session.userData.trackingHistory.length; index++) {
+        _element = session.userData.trackingHistory[index];
+        card = new builder.HeroCard(session)
+            .title(`Informações do rastreio ${_element.trackingCode}`)
+            //.subtitle(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`)
+            .text(`${_element.lastDescription}`);
+
+        //Senão estiver finalizado, adicionar botão para rastreio
+        if (!carteiroUtils.trackingIsFinished(_element))
+            card.buttons([(builder.CardAction.imBack(session, `rastrear?trackingCode=${_element.trackingCode}`, "Rastrear"))]);
+
+        _msg.addAttachment(card);
+    }
+
+    return _msg;
+};
 
 bot.dialog('showTrackingFinished', function (session, args) {
     session.send(`De acordo com seu histórico de rastreio, o item ${args.trackingCode} já consta como entregue ;)`);
@@ -254,37 +249,74 @@ bot.dialog('finishingTalk', [
 ]);
 
 /**
+ * Cra um novo registros de histórico
+ * @param {*} trackingInfo Informações de rastreio
+ * @returns {*} Retorna o obketo criado a partir das informações de rastreio
+ */
+let createNewHistory = (trackingInfo) => {
+
+    const _lastEvent = trackingInfo.evento[0];
+
+    let _newHistory = {
+        trackingCode: trackingInfo.numero,
+        trackingCategory: trackingInfo.categoria,
+        lastType: _lastEvent.tipo,
+        lastStatus: _lastEvent.status,
+        lastDescription: _lastEvent.descricao,
+        trackingTime: new Date().toISOString()
+    };
+
+    return _newHistory;
+};
+
+/**
  * Adiciona um registro no histórico do usuário
- * @param {*} session 
+ * @param {*} session Session
  * @param {*} info Informações do rastreio
+ * @returns {Boolean} Retorna true quando tudo finalizado.
  */
 let addUserTrackingHistory = function (session, info) {
-    var _lastEvent = info.evento[0];
+    const _lastEvent = info.evento[0];
 
     //Verifica se existe já existe o código, então atualizar somente os status
-    let _trackingUpdateIndex = session.userData.trackingHistory.findIndex((element) => {
-        return element.trackingCode === info.numero;
-    });
+    let _trackingUpdateIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, info.numero);
 
-    if (_trackingUpdateIndex == -1) {
-
-        var _newHistory = {
-            trackingCode: info.numero,
-            trackingCategory: info.categoria,
-            lastType: _lastEvent.tipo,
-            lastStatus: _lastEvent.status,
-            lastDescription: _lastEvent.descricao,
-            trackingTime: new Date().toISOString()
-        };
-
-        session.userData.trackingHistory.push(_newHistory);
+    if (_trackingUpdateIndex === -1) {
+        session.userData.trackingHistory.push(createNewHistory(info));
     }
     else {
-        var _entityToUpdate = session.userData.trackingHistory[_trackingUpdateIndex];
+        let _entityToUpdate = session.userData.trackingHistory[_trackingUpdateIndex];
 
         _entityToUpdate.lastType = _lastEvent.tipo;
         _entityToUpdate.lastStatus = _lastEvent.status;
         _entityToUpdate.lastDescription = _lastEvent.descricao;
         _entityToUpdate.trackingTime = new Date().toISOString();
     }
+
+    return true;
+};
+
+let requestTracking = (session, trackingCode) => {
+    let _msg = `Aguarde um momento enquanto busco as informações do código ${trackingCode}`;
+    session.send(_msg);
+
+    session.sendTyping();
+    trackingCorreios.track(trackingCode).then((result) => {
+        _msg = '';
+
+        if (result === null || result.lenght === 0) {
+            session.send('Desculpe-me, mas ainda não foram encontradas informações com esse código');
+        }
+        else if (result && result[0].erro) {
+            session.send(`Desculpe-me, mas não foram encontradas informações do pedido. O item pode ter sido recém postado.`);
+        }
+        else {
+            session.beginDialog('trackingInfo', { data: result[0] });
+
+        }
+
+        session.beginDialog('finishingTalk');
+    }).catch(() => {
+        session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
+    });
 };
