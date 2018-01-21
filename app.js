@@ -59,8 +59,8 @@ const bot = new builder.UniversalBot(connector, [
             .suggestedActions(
             builder.SuggestedActions.create(
                 session, [
-                    builder.CardAction.imBack(session, "rastrear", "Rastrear item"),
-                    builder.CardAction.imBack(session, "ver historico", "Ver histórico")
+                    builder.CardAction.imBack(session, "rastrear", "Rastrear"),
+                    builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
                 ]
             ));
         session.send(msg);
@@ -138,7 +138,7 @@ bot.dialog('seeTrackingHistory', [
         }
     }
 ]).triggerAction({
-    matches: /^ver historico$/i
+    matches: /^ver histórico$/i
 });
 
 let buildHistoryList = (session) => {
