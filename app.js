@@ -150,11 +150,11 @@ bot.dialog('seeTrackingHistory', [
                     session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
                 ));
 
-            session.send(msg).endDialog();
+            session.send(msg).endConversation();
         }
         else {
-            session.send(buildHistoryList(session));
-            session.beginDialog('mainMenu').endDialog();
+            session.send(buildHistoryList(session)).endConversation();
+            // session.beginDialog('mainMenu').endDialog();
         }
     }
 ]).triggerAction({
