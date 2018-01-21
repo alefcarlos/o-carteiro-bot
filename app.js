@@ -140,7 +140,14 @@ bot.dialog('askForTrackingCode', [
 bot.dialog('seeTrackingHistory', [
     function (session) {
         if (session.userData.trackingHistory.length === 0) {
-            session.send('Você ainda não rastreou nenhum item, digite rastrear para começar agora ;)').endConversation();
+            const msg = new builder.Message(session)
+                .text(`${session.userData.userName}, não encontrei itens para exibir, que tal rastrear agora ?`)
+                .suggestedActions(
+                builder.SuggestedActions.create(
+                    session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
+                ));
+                
+            session.send(msg).endConversation();
         }
         else {
             session.send(buildHistoryList(session)).endConversation();
@@ -192,10 +199,6 @@ bot.dialog('trackingInfo', function (session, args) {
         .subtitle(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`)
         .text(`${_lastEvent.descricao}`));
 
-    // .images([builder.CardImage.create(session, 'http://petersapparel.parseapp.com/img/whiteshirt.png')])
-    // .buttons([
-    //     builder.CardAction.imBack(session, "buy classic white t-shirt", "Buy")
-    // ]));
     session.send(msg).endDialog();
 });
 
