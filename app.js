@@ -159,6 +159,7 @@ bot.dialog('seeTrackingHistory', [
 
 let buildHistoryList = (session) => {
     const _msg = new builder.Message(session);
+    _msg.attachmentLayout(builder.AttachmentLayout.carousel);
 
     let _element = null;
     let card = null;
