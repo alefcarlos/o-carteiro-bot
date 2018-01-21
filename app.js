@@ -95,11 +95,20 @@ bot.dialog('recognizerUser', [
 
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
-    function (session, args) {
-        if (args && args.reprompt)
-            builder.Prompts.text(session, `${session.userData.userName}, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.`);
-        else
-            builder.Prompts.text(session, `Agora que já nos conhecemo ${session.userData.userName}, me diga qual é o código você gostaria de rastrear ?`);
+    function (session, args, next) {
+        //Verificar se viemos de um rastrear do histórico
+        if (session.message.text.indexOf('?trackingCode') > 0) {
+            const _code = session.message.text.split('=')[1];
+            next({ response: _code });
+        }
+        else {
+
+            if (args && args.reprompt)
+                builder.Prompts.text(session, `${session.userData.userName}, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.`);
+            else
+                builder.Prompts.text(session, `Agora que já nos conhecemo ${session.userData.userName}, me diga qual é o código você gostaria de rastrear ?`);
+
+        }
     },
     function (session, results) {
         const _code = results.response.trim();
@@ -124,7 +133,7 @@ bot.dialog('askForTrackingCode', [
         }
     }
 ]).triggerAction({
-    matches: /^rastrear$/i
+    matches: /^rastrear$|rastrear\?trackingCode=/i
 });
 
 //Diálogo para mostrar os itens do histórico do usuário
@@ -156,7 +165,7 @@ let buildHistoryList = (session) => {
 
         //Senão estiver finalizado, adicionar botão para rastreio
         if (!carteiroUtils.trackingIsFinished(_element))
-            card.buttons([(builder.CardAction.imBack(session, `rastrear?trackingCode=${_element.trackingCode}`, "Rastrear"))]);
+            card.buttons([builder.CardAction.imBack(session, `rastrear?trackingCode=${_element.trackingCode}`, "Rastrear")]);
 
         _msg.addAttachment(card);
     }
