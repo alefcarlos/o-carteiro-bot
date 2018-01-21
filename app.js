@@ -10,7 +10,7 @@ const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesC
 const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 const azure = require('botbuilder-azure');
 
-const carteiroUtils = require('./carteiro-utils.js');
+const carteiroUtils = require('./src/carteiro-utils.js');
 
 // Setup Restify Server
 const server = restify.createServer();
