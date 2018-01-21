@@ -8,6 +8,8 @@ O Carteiro ajuda a rastrear objetos dos Correios a partir de códigos de rastrei
 
 [![Testar](https://telegram.org/img/tgme/LogoBig_1x.png "Testar no Telegram")](https://telegram.me/ocarteirobot)
 
+[![Skype](https://dev.botframework.com/Client/Images/Add-To-Skype-Buttons.png)](https://join.skype.com/bot/e6aae7db-2baf-4753-b267-d3f54acb5800)
+
 ## Pré-requisitos
 
 1. Node
