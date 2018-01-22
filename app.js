@@ -81,7 +81,8 @@ bot.dialog('recognizerUser', [
         let _user = session.userData.userName;
 
         if (_user) {
-            next({ response: _user });
+           session.endDialog();
+           session.beginDialog('mainMenu');
         }
         else {
             builder.Prompts.text(session, 'E qual seu nome ?');
