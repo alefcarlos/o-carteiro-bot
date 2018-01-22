@@ -52,7 +52,6 @@ const bot = new builder.UniversalBot(connector, [
     function (session) {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.beginDialog('recognizerUser');
-        session.beginDialog('mainMenu');
     }
 ]).endConversationAction(
     "endTrackingCode", "Até o próximo rastreio !",
@@ -77,12 +76,12 @@ bot.dialog('mainMenu', function (session) {
 
 //Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
-    function (session) {
+    function (session, args, next) {
         //Verificar usuário
         let _user = session.userData.userName;
 
         if (_user) {
-            session.endDialogWithResult({ response: _user });
+            next({ response: _user });
         }
         else {
             builder.Prompts.text(session, 'E qual seu nome ?');
@@ -92,7 +91,7 @@ bot.dialog('recognizerUser', [
         session.userData.userName = results.response.trim();
         session.userData.trackingHistory = [];
 
-        session.endDialog();
+        session.beginDialog('mainMenu');
     }
 ]);
 
