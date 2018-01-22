@@ -51,7 +51,7 @@ const usedStorage = process.env.BotEnv === 'prod' ? cosmosStorage : inMemoryStor
 const bot = new builder.UniversalBot(connector, [
     function (session) {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
-        session.beginDialog('recognizerUser');
+        session.replaceDialog('recognizerUser');
     }
 ]).endConversationAction(
     "endTrackingCode", "Até o próximo rastreio !",
@@ -81,8 +81,8 @@ bot.dialog('recognizerUser', [
         let _user = session.userData.userName;
 
         if (_user) {
-           session.endDialog();
-           session.beginDialog('mainMenu');
+            session.endDialog();
+            session.replaceDialog('mainMenu');
         }
         else {
             builder.Prompts.text(session, 'E qual seu nome ?');
@@ -92,7 +92,7 @@ bot.dialog('recognizerUser', [
         session.userData.userName = results.response.trim();
         session.userData.trackingHistory = [];
 
-        session.beginDialog('mainMenu');
+        session.replaceDialog('mainMenu');
     }
 ]);
 
@@ -117,22 +117,22 @@ bot.dialog('askForTrackingCode', [
         const _code = results.response.trim();
 
         //Verifica se o código passado é válido para requisição
-        const _isCodeValid = trackingCorreios.isValid(_code);
+        // const _isCodeValid = trackingCorreios.isValid(_code);
+        const _isCodeValid = /^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/.test(_code);
 
         if (!_isCodeValid) {
             session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
+        } else {
 
-            return;
-        }
+            //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
+            const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, _code);
 
-        //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
-        const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, _code);
-
-        if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
-            session.replaceDialog('showTrackingFinished', { trackingCode: _code });
-        }
-        else {
-            requestTracking(session, _code);
+            if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
+                session.replaceDialog('showTrackingFinished', { trackingCode: _code });
+            }
+            else {
+                requestTracking(session, _code);
+            }
         }
     }
 ]).triggerAction({
@@ -154,7 +154,6 @@ bot.dialog('seeTrackingHistory', [
         }
         else {
             session.send(buildHistoryList(session)).endConversation();
-            // session.beginDialog('mainMenu').endDialog();
         }
     }
 ]).triggerAction({
@@ -187,7 +186,7 @@ let buildHistoryList = (session) => {
 
 bot.dialog('showTrackingFinished', function (session, args) {
     session.send(`De acordo com seu histórico de rastreio, o item ${args.trackingCode} já consta como entregue ;)`);
-    session.beginDialog('finishingTalk');
+    session.replaceDialog('finishingTalk');
 });
 
 // Diálogo que mostra o resultado da pesquisa
@@ -219,6 +218,11 @@ bot.dialog('finishingTalk', [
 
         // Creating the Cognitive Services credentials
         // This requires a key corresponding to the service being used (i.e. text-analytics, etc)
+        if (!process.env.TextAnalyticKey) {
+
+            session.endConversation('Obrigado pela resposta ;)');
+            return;
+        }
         let _credentials = new CognitiveServicesCredentials(process.env.TextAnalyticKey);
 
         //Fazer requisição da análise de sentimento da opnião do serviço
@@ -259,7 +263,7 @@ bot.dialog('finishingTalk', [
 
         }).catch(function (err) {
             console.log(err);
-            session.send('Obrigado pela resposta ;)');
+            session.endConversation('Obrigado pela resposta ;)');
         });
 
     }
@@ -318,7 +322,7 @@ let requestTracking = (session, trackingCode) => {
     session.send(_msg);
 
     session.sendTyping();
-    trackingCorreios.track(trackingCode).then((result) => {
+    trackingCorreios.track(trackingCode, { filter: false }).then((result) => {
         _msg = '';
 
         if (result === null || result.lenght === 0) {
