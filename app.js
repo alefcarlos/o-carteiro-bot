@@ -332,11 +332,10 @@ let requestTracking = (session, trackingCode) => {
             session.send(`Desculpe-me, mas não foram encontradas informações do pedido. O item pode ter sido recém postado.`);
         }
         else {
-            session.beginDialog('trackingInfo', { data: result[0] });
-
+            session.replaceDialog('trackingInfo', { data: result[0] });
         }
 
-        session.beginDialog('finishingTalk');
+        session.replaceDialog('finishingTalk');
     }).catch(() => {
         session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
     });
