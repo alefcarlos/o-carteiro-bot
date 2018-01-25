@@ -114,7 +114,7 @@ bot.dialog('askForTrackingCode', [
         }
     },
     function (session, results) {
-        const _code = results.response.trim();
+        const _code = results.response.trim().toUpperCase();
 
         //Verifica se o código passado é válido para requisição
         // const _isCodeValid = trackingCorreios.isValid(_code);
@@ -199,9 +199,9 @@ bot.dialog('trackingInfo', function (session, args) {
     addUserTrackingHistory(session, _data);
 
     msg.addAttachment(new builder.HeroCard(session)
-        .title("Informações do rastreio")
-        .subtitle(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`)
-        .text(`${_lastEvent.descricao}`));
+        .title(`${_lastEvent.descricao}`)
+        .subtitle(carteiroUtils.getTrackingDestination(_data))
+        .text(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`));
 
     session.send(msg).endDialog();
 });
@@ -270,27 +270,6 @@ bot.dialog('finishingTalk', [
 ]);
 
 /**
- * Cra um novo registros de histórico
- * @param {*} trackingInfo Informações de rastreio
- * @returns {*} Retorna o obketo criado a partir das informações de rastreio
- */
-let createNewHistory = (trackingInfo) => {
-
-    const _lastEvent = trackingInfo.evento[0];
-
-    let _newHistory = {
-        trackingCode: trackingInfo.numero,
-        trackingCategory: trackingInfo.categoria,
-        lastType: _lastEvent.tipo,
-        lastStatus: _lastEvent.status,
-        lastDescription: _lastEvent.descricao,
-        trackingTime: new Date().toISOString()
-    };
-
-    return _newHistory;
-};
-
-/**
  * Adiciona um registro no histórico do usuário
  * @param {*} session Session
  * @param {*} info Informações do rastreio
@@ -303,7 +282,7 @@ let addUserTrackingHistory = function (session, info) {
     let _trackingUpdateIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, info.numero);
 
     if (_trackingUpdateIndex === -1) {
-        session.userData.trackingHistory.push(createNewHistory(info));
+        session.userData.trackingHistory.push(carteiroUtils.trackingInfoToHistory(info));
     }
     else {
         let _entityToUpdate = session.userData.trackingHistory[_trackingUpdateIndex];
@@ -312,6 +291,7 @@ let addUserTrackingHistory = function (session, info) {
         _entityToUpdate.lastStatus = _lastEvent.status;
         _entityToUpdate.lastDescription = _lastEvent.descricao;
         _entityToUpdate.trackingTime = new Date().toISOString();
+        _entityToUpdate.lastDestination = carteiroUtils.getTrackingDestination(info);
     }
 
     return true;
