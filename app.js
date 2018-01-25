@@ -11,7 +11,6 @@ const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 const azure = require('botbuilder-azure');
 
 const carteiroUtils = require('./src/carteiro-utils.js');
-
 // Setup Restify Server
 const server = restify.createServer();
 
@@ -38,9 +37,6 @@ const connector = new builder.ChatConnector({
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
 const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
-// Listen for messages from users 
-server.post('/api/messages', connector.listen());
-
 // Se tiver em modo dev, usar in-memory
 const inMemoryStorage = new builder.MemoryBotStorage();
 
@@ -48,30 +44,38 @@ const inMemoryStorage = new builder.MemoryBotStorage();
 const usedStorage = process.env.BotEnv === 'prod' ? cosmosStorage : inMemoryStorage;
 
 // Um bot que obtém o rastreio de um item no correios
-const bot = new builder.UniversalBot(connector, [
-    function (session) {
-        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
-        session.replaceDialog('recognizerUser');
-    }
-]).endConversationAction(
-    "endTrackingCode", "Até o próximo rastreio !",
-    {
-        matches: /^tchau$|^xau$|^sair$/i
-    })
+const bot = new builder.UniversalBot(connector)
     .set('storage', usedStorage);
 
+// Make sure you add code to validate these fields
+const luisAppId = process.env.LuisAppId;
+const luisAPIKey = process.env.LuisAPIKey;
+const luisAPIHostName = process.env.LuisAPIHostName || 'westus.api.cognitive.microsoft.com';
+
+const LuisModelUrl = `https://${luisAPIHostName}/luis/v2.0/apps/${luisAppId}?subscription-key=${luisAPIKey}`;
+
+// Listen for messages from users 
+server.post('/api/messages', connector.listen());
+
+// Main dialog with LUIS
+const recognizer = new builder.LuisRecognizer(LuisModelUrl);
+const intents = new builder.IntentDialog({ recognizers: [recognizer] })
+    .matches('Greeting', (session) => {
+        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
+        session.replaceDialog('recognizerUser');
+    })
+    .matches('Tracking.Find', 'askForTrackingCode')
+    .matches('Tracking.History', 'seeTrackingHistory')
+    .onDefault((session) => {
+        session.send('Desculpe, não entendi sua frase \'%s\'.', session.message.text);
+    });
+
+bot.dialog('/', intents);
+
 //Diálogo menu principal
-bot.dialog('mainMenu', function (session) {
-    const msg = new builder.Message(session)
-        .text(`${session.userData.userName}, o que você gostaria de fazer ?`)
-        .suggestedActions(
-        builder.SuggestedActions.create(
-            session, [
-                builder.CardAction.imBack(session, "rastrear", "Rastrear"),
-                builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
-            ]
-        ));
-    session.send(msg);
+bot.dialog('instructions', function (session) {
+    session.send("Me diga o que você gostaria de fazer, por exemplo: 'rastrear meu item' ou 'ver histórico de pesquisa'. Você pode até me passar o código junto: rastrear AA100833276BR")
+    .endDialog();
 });
 
 //Diálogo que reconhece o usuário
@@ -81,63 +85,68 @@ bot.dialog('recognizerUser', [
         let _user = session.userData.userName;
 
         if (_user) {
-            session.endDialog();
-            session.replaceDialog('mainMenu');
+            session.replaceDialog('instructions');
         }
         else {
-            builder.Prompts.text(session, 'E qual seu nome ?');
+            builder.Prompts.text(session, 'Qual seu nome ?');
         }
     },
     function (session, results) {
         session.userData.userName = results.response.trim();
         session.userData.trackingHistory = [];
 
-        session.replaceDialog('mainMenu');
+        session.replaceDialog('instructions');
     }
 ]);
 
 //Perguntar sobre o código de rastreio
 bot.dialog('askForTrackingCode', [
     function (session, args, next) {
-        //Verificar se viemos de um rastrear do histórico
-        if (session.message.text.indexOf('?trackingCode') > 0) {
-            const _code = session.message.text.split('=')[1];
-            next({ response: _code });
-        }
-        else {
+        // Resolve and store any Tracking.Code entity passed from LUIS.
+        const _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
 
+        const trackingInfo = session.dialogData.tracking = {
+            code: _code ? _code.entity.toUpperCase() : null
+        };
+
+        // Prompt for tracking code
+        if (!trackingInfo.code) {
             if (args && args.reprompt)
                 builder.Prompts.text(session, `${session.userData.userName}, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.`);
             else
-                builder.Prompts.text(session, `Agora que já nos conhecemo ${session.userData.userName}, me diga qual é o código você gostaria de rastrear ?`);
-
+                builder.Prompts.text(session, 'Qual código você gostaria de rastrear?');
+        }
+        else {
+            next();
         }
     },
     function (session, results) {
-        const _code = results.response.trim().toUpperCase();
+        //Obter o código de rastreio, se já veio informado  ignorar
+        const trackingInfo = session.dialogData.tracking;
+
+        if (results.response) {
+            trackingInfo.code = results.response.trim().toUpperCase();
+        }
 
         //Verifica se o código passado é válido para requisição
-        // const _isCodeValid = trackingCorreios.isValid(_code);
-        const _isCodeValid = /^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/.test(_code);
+        const _isCodeValid = /^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/.test(trackingInfo.code);
 
         if (!_isCodeValid) {
             session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
         } else {
 
             //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
-            const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, _code);
+            const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, trackingInfo.code);
 
             if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
-                session.replaceDialog('showTrackingFinished', { trackingCode: _code });
+                session.replaceDialog('showTrackingFinished', { trackingCode: trackingInfo.code });
             }
             else {
-                requestTracking(session, _code);
+                requestTracking(session, trackingInfo.code);
             }
         }
     }
-]).triggerAction({
-    matches: /^rastrear$|rastrear\?trackingCode=/i
-});
+]);
 
 //Diálogo para mostrar os itens do histórico do usuário
 bot.dialog('seeTrackingHistory', [
@@ -156,9 +165,7 @@ bot.dialog('seeTrackingHistory', [
             session.send(buildHistoryList(session)).endConversation();
         }
     }
-]).triggerAction({
-    matches: /^ver histórico$/i
-});
+]);
 
 let buildHistoryList = (session) => {
     const _msg = new builder.Message(session);
@@ -176,7 +183,7 @@ let buildHistoryList = (session) => {
 
         //Senão estiver finalizado, adicionar botão para rastreio
         if (!carteiroUtils.trackingIsFinished(_element))
-            card.buttons([builder.CardAction.imBack(session, `rastrear?trackingCode=${_element.trackingCode}`, "Rastrear")]);
+            card.buttons([builder.CardAction.imBack(session, `rastrear ${_element.trackingCode}`, "Rastrear")]);
 
         _msg.addAttachment(card);
     }
