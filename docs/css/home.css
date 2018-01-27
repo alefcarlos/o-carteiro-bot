@@ -6,6 +6,10 @@
     padding: 60px 50px;
 }
 
+.project-name {
+    font-size: 2.25em
+}
+
 .project-tagline {
     margin-bottom: 2rem;
     font-weight: normal;
@@ -15,6 +19,8 @@
 .available-chanels {
     list-style: none;
     padding: 20px 20px;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .available-chanels li {
@@ -23,15 +29,61 @@
 }
 
 .available-chanels li img {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
 }
 
-.webchat {
-    padding-top: 20px;
+.container h2 {
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 15px;
 }
 
-.webchat iframe{
-    width: 100%;
-    height: 400px;
+.intro .info {
+    font-size: 1.125em;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto
+}
+
+/* Como funciona */
+
+.como-funciona {
+    margin: 0px auto;
+}
+
+.como-funciona-item {
+    margin-bottom: 40px;
+}
+
+.como-funciona-item h2 {
+    font-size: 2.25em;
+    margin-bottom: 15px;
+}
+
+.como-funciona-item p {
+    font-size: 1.125em;
+    line-height: 1.4em;
+    max-width: 320px;
+    margin-bottom: 40px;
+}
+
+.como-funciona-img, .locas-info {
+    flex: 1;
+    margin: 0 10px;
+}
+
+.como-funciona-item.rastreie .como-funciona-img {
+    order: 1
+}
+
+@media (max-width: 739px) {
+    .como-funciona-item.rastreie .como-funciona-img {
+        order: 0
+    }
+
+    .available-chanels li img {
+		width: 50px;
+		height: 50px;
+	}
 }
