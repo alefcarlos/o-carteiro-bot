@@ -76,14 +76,14 @@ bot.dialog('/', intents);
 bot.dialog('instructions', function (session) {
 
     const msg = new builder.Message(session)
-    .text(`${session.userData.userName}, diga o que você gostaria de fazer, por exemplo: 'rastrear meu item' ou 'ver histórico de pesquisa'. Você pode até me passar o código junto: rastrear AA100833276BR"`)
-    .suggestedActions(
-    builder.SuggestedActions.create(
-        session, [
-            builder.CardAction.imBack(session, "rastrear", "Rastrear"),
-            builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
-        ]
-    ));
+        .text(`${session.userData.userName}, diga o que você gostaria de fazer, por exemplo: 'rastrear meu item' ou 'ver histórico de pesquisa'. Você pode até me passar o código junto: rastrear AA100833276BR"`)
+        .suggestedActions(
+        builder.SuggestedActions.create(
+            session, [
+                builder.CardAction.imBack(session, "rastrear", "Rastrear"),
+                builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
+            ]
+        ));
     session.send(msg).endDialog();
 });
 
@@ -112,10 +112,22 @@ bot.dialog('recognizerUser', [
 bot.dialog('askForTrackingCode', [
     function (session, args, next) {
         // Resolve and store any Tracking.Code entity passed from LUIS.
-        const _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
+        let _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
+        let _trackingCode = _code ? _code.entity.toUpperCase() : '';
+
+        if (!_code) {
+
+            //Se não encontrou via LUIS, então verificar por REGEX
+            const rex = (/([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/);
+            const _found = session.message.text.match(rex);
+
+
+            if (_found)
+                _trackingCode = _found[0].toUpperCase();
+        }
 
         const trackingInfo = session.dialogData.tracking = {
-            code: _code ? _code.entity.toUpperCase() : null
+            code: _trackingCode
         };
 
         // Prompt for tracking code
