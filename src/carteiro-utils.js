@@ -79,6 +79,10 @@ let getTrackingDestination = (info) => {
     if (trackingIsFinished(trackingInfoToHistory(info, false)))
         return `${_lastEvent.cidade} - ${_lastEvent.uf}`;
 
+    //Objeto não está entregue, mas não tem destino(pode acontecer com compras internacionais)
+    if (!_lastEvent.destino)
+        return `${_lastEvent.cidade} - ${_lastEvent.uf}`;
+
     //Objeto ainda não entregue, então devemos ler a informação da propriedade destino
     const _destination = _lastEvent.destino;
 

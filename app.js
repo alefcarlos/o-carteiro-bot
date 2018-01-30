@@ -119,7 +119,7 @@ bot.dialog('askForTrackingCode', [
 
             //Se não encontrou via LUIS, então verificar por REGEX
             const rex = (/([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/);
-            const _found = session.message.text.match(rex);
+            const _found = session.message.text.toUpperCase().match(rex);
 
 
             if (_found)
