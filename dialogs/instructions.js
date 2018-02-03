@@ -10,5 +10,6 @@ module.exports = function (session) {
                 builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
             ]
         ));
+
     session.send(msg).endDialog();
-}
+};

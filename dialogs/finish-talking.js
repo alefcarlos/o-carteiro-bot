@@ -1,7 +1,12 @@
 const builder = require('botbuilder');
+const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesCredentials;
+const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
+
+/*eslint no-console: ["error", { allow: ["warn","log"] }] */
+
 
 //Após a exibição do resultado da busca, devemos perguntar o que ele achou do nosso serviço
-module.exports =  [
+module.exports = [
     function (session) {
         builder.Prompts.text(session, `${session.userData.userName}, fui util à você ?`);
     },
@@ -15,6 +20,7 @@ module.exports =  [
         if (!process.env.TextAnalyticKey) {
 
             session.endConversation('Obrigado pela resposta ;)');
+            
             return;
         }
         let _credentials = new CognitiveServicesCredentials(process.env.TextAnalyticKey);

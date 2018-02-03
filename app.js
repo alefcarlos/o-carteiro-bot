@@ -5,8 +5,6 @@
 const restify = require('restify');
 const builder = require('botbuilder');
 const azure = require('botbuilder-azure');
-const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesCredentials;
-const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 
 // Setup Restify Server
 const server = restify.createServer();
@@ -69,14 +67,38 @@ const intents = new builder.IntentDialog({ recognizers: [recognizer] })
 
 bot.dialog('/', intents);
 bot.dialog('instructions', require('./dialogs/instructions'));
-bot.dialog('recognizerUser', require('./dialogs/recognizer-user'))
+bot.dialog('recognizerUser', require('./dialogs/recognizer-user'));
 bot.dialog('seeTrackingHistory', require('./dialogs/tracking-history'));
 bot.dialog('finishingTalk', require('./dialogs/finish-talking'));
 bot.dialog('trackingInfo', require('./dialogs/tracking-info'));
 bot.dialog('showTrackingFinished,', require('./dialogs/tracking-is-finished'));
 bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
 
+// Every 5 seconds, check for new registered users and start a new dialog
+// setInterval(function () {
+//     var newAddresses = userStore.splice(0);
+//     newAddresses.forEach(function (address) {
+
+//         console.log('Starting survey for address:', address);
+
+//         // new conversation address, copy without conversationId
+//         var newConversationAddress = Object.assign({}, address);
+//         delete newConversationAddress.conversation;
+
+//         // start survey dialog
+//         bot.beginDialog(newConversationAddress, 'survey', null, function (err) {
+//             if (err) {
+//                 // error ocurred while starting new conversation. Channel not supported?
+//                 bot.send(new builder.Message()
+//                     .text('This channel does not support this operation: ' + err.message)
+//                     .address(address));
+//             }
+//         });
+
+//     });
+// }, 5000);
+
 // log any bot errors into the console
-bot.on('error', function (e) {
-    console.log('And error ocurred', e);
+bot.on('error', function (ex) {
+    console.log('And error ocurred', ex);
 });
