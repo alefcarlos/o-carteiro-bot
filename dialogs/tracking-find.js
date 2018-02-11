@@ -20,7 +20,7 @@ module.exports = [
                 _trackingCode = _found[0].toUpperCase();
         }
 
-        const trackingInfo = session.dialogData.tracking = {
+        const trackingInfo = session.conversationData.tracking = {
             code: _trackingCode
         };
 
@@ -37,18 +37,19 @@ module.exports = [
     },
     function (session, results) {
         //Obter o código de rastreio, se já veio informado  ignorar
-        const trackingInfo = session.dialogData.tracking;
+        const trackingInfo = session.conversationData.tracking;
 
         if (results.response) {
             trackingInfo.code = results.response.trim().toUpperCase();
         }
 
         //Verifica se o código passado é válido para requisição
-        const _isCodeValid = /^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/.test(trackingInfo.code);
+        const _isCodeValid = (/^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/).test(trackingInfo.code);
 
         if (!_isCodeValid) {
             session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
-        } else {
+        }
+        else {
 
             //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
             const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, trackingInfo.code);
@@ -57,14 +58,15 @@ module.exports = [
                 session.replaceDialog('showTrackingFinished', { trackingCode: trackingInfo.code });
             }
             else {
-                requestTracking(session, trackingInfo.code);
+                requestTracking(session);
             }
         }
     }
 ];
 
 //Métodos auxiliares
-let requestTracking = (session, trackingCode) => {
+let requestTracking = (session) => {
+    const trackingCode = session.conversationData.tracking.code;
     let _msg = `Aguarde um momento enquanto busco as informações do código ${trackingCode}`;
     session.send(_msg);
 
@@ -74,15 +76,17 @@ let requestTracking = (session, trackingCode) => {
 
         if (result === null || result.lenght === 0) {
             session.send('Desculpe-me, mas ainda não foram encontradas informações com esse código');
+            session.replaceDialog('finishingTalk');
         }
         else if (result && result[0].erro) {
             session.send(`Desculpe-me, mas não foram encontradas informações do pedido. O item pode ter sido recém postado.`);
+            session.replaceDialog('finishingTalk');
         }
         else {
             session.replaceDialog('trackingInfo', { data: result[0] });
         }
 
-        session.replaceDialog('finishingTalk');
+        
     }).catch(() => {
         session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
     });

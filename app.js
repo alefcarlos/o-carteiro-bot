@@ -5,6 +5,7 @@
 const restify = require('restify');
 const builder = require('botbuilder');
 const azure = require('botbuilder-azure');
+const carteiroAPI = require('./carteiro-api');
 
 // Setup Restify Server
 const server = restify.createServer();
@@ -56,7 +57,6 @@ server.post('/api/messages', connector.listen());
 const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({ recognizers: [recognizer] })
     .matches('Greeting', (session) => {
-        session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
         session.replaceDialog('recognizerUser');
     })
     .matches('Tracking.Find', 'askForTrackingCode')
@@ -71,32 +71,40 @@ bot.dialog('recognizerUser', require('./dialogs/recognizer-user'));
 bot.dialog('seeTrackingHistory', require('./dialogs/tracking-history'));
 bot.dialog('finishingTalk', require('./dialogs/finish-talking'));
 bot.dialog('trackingInfo', require('./dialogs/tracking-info'));
+bot.dialog('askForTrackingUpdate', require('./dialogs/ask-for-tracking-update'));
 bot.dialog('showTrackingFinished,', require('./dialogs/tracking-is-finished'));
 bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
+bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
+
+bot.on('conversationUpdate', function (update) {
+
+    if (update.membersAdded) {
+
+        update.membersAdded.forEach((identity) => {
+            if (identity.id !== update.address.bot.id) {
+                const reply = new builder.Message()
+                    .address(update.address)
+                    .text('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)<br> Diga **Oi**');
+
+                bot.send(reply);
+            }
+        });
+    }
+});
 
 // Every 5 seconds, check for new registered users and start a new dialog
-// setInterval(function () {
-//     var newAddresses = userStore.splice(0);
-//     newAddresses.forEach(function (address) {
+setInterval(function () {
 
-//         console.log('Starting survey for address:', address);
-
-//         // new conversation address, copy without conversationId
-//         var newConversationAddress = Object.assign({}, address);
-//         delete newConversationAddress.conversation;
-
-//         // start survey dialog
-//         bot.beginDialog(newConversationAddress, 'survey', null, function (err) {
-//             if (err) {
-//                 // error ocurred while starting new conversation. Channel not supported?
-//                 bot.send(new builder.Message()
-//                     .text('This channel does not support this operation: ' + err.message)
-//                     .address(address));
-//             }
-//         });
-
-//     });
-// }, 5000);
+    carteiroAPI.getTrackings()
+        .then((result) => {
+            result.data.result.forEach((track) => {
+                bot.beginDialog(track.address, 'showTrackingUpdate')
+            });
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+}, 10000);
 
 // log any bot errors into the console
 bot.on('error', function (ex) {

@@ -16,7 +16,7 @@ module.exports = function (session) {
     else {
         session.send(buildHistoryList(session)).endConversation();
     }
-}
+};
 
 //Auxiliares
 let buildHistoryList = (session) => {

@@ -10,7 +10,7 @@ module.exports = [
             session.replaceDialog('instructions');
         }
         else {
-            builder.Prompts.text(session, 'Qual seu nome ?');
+            builder.Prompts.text(session, 'Opa, primeiro vamo nos conhecer. Qual seu nome ?');
         }
     },
     function (session, results) {
@@ -19,4 +19,4 @@ module.exports = [
 
         session.replaceDialog('instructions');
     }
-]
+];
