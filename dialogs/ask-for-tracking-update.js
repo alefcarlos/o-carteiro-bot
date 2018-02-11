@@ -27,7 +27,13 @@ module.exports = [
                 session.replaceDialog('finishingTalk'); //Devemos finalizar
 
             }).catch((error) => {
-                session.endConversation(`${session.userData.userName}, houve um problema ao salvar notificação: ${error.response.data.message}`);
+                if (error.response)
+                    session.endConversation(`${session.userData.userName}, houve um problema ao salvar notificação: ${error.response.data.message}`);
+                else
+                    session.endConversation(`${session.userData.userName}, houve um problema ao salvar notificação. Tente novamente mais tarde.`);
+
+
+                console.log(error);
                 session.replaceDialog('finishingTalk'); //Devemos finalizar
             });
         }

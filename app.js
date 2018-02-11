@@ -31,7 +31,7 @@ const connector = new builder.ChatConnector({
 
 // Objetos de conexão
 const docDbClient = new azure.DocumentDbClient(documentDbOptions);
-const cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
+const cosmosStorage = new azure.AzureBotStorage({ gzipData: true }, docDbClient);
 
 // Se tiver em modo dev, usar in-memory
 const inMemoryStorage = new builder.MemoryBotStorage();
@@ -97,8 +97,13 @@ setInterval(function () {
 
     carteiroAPI.getTrackings()
         .then((result) => {
-            result.data.result.forEach((track) => {
-                bot.beginDialog(track.address, 'showTrackingUpdate')
+            const list = result.data.result;
+
+            if (!list)
+                return;
+
+            list.forEach((track) => {
+                bot.beginDialog(track.address, 'showTrackingUpdate', track)
             });
         })
         .catch((error) => {

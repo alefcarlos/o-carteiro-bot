@@ -1,22 +1,13 @@
 const builder = require('botbuilder');
+const carteiroAPI = require('../carteiro-api');
 
 //Exibe mensagem dizendo que o item já foi entregue
-module.exports = [
+module.exports = function (session, args) {
+    session.send("Nova notificação");
 
-    function (session, args, next) {
-
-        var prompt = ('Hello, I\'m the survey dialog. I\'m interrupting your conversation to ask you a question. Type "done" to resume');
-
-        builder.Prompts.choice(session, prompt, "done");
-
-    },
-
-    function (session, results) {
-
-        session.send("Great, back to the original conversation");
-
-        session.endDialog();
-
-    }
-
-]
+    carteiroAPI.setSeen(args.id)
+        .then(() => { })
+        .catch((error) => {
+            console.log(error.message);
+        });
+}

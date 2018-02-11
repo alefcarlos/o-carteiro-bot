@@ -8,7 +8,8 @@ const axios = require('axios');
  * @param {*} address Informações da conversa
  */
 let addNewSubscribe = (trackingCode, addressInfo) => {
-    var _request = axios.post('http://localhost:8080/subscribe', {
+    const _url = `${process.env.CarteiroAPIUrl}/subscribe`;
+    const _request = axios.post(_url, {
         code: trackingCode,
         address: addressInfo
     })
@@ -18,12 +19,25 @@ let addNewSubscribe = (trackingCode, addressInfo) => {
 
 /** Obtém todos os rastreios que têm informações atualizadas */
 let getTrackings = () =>{
-    var _request = axios.get('http://localhost:8080/tracking/notify');
+    const _url = `${process.env.CarteiroAPIUrl}/tracking/notify`;
+    const _request = axios.get(_url);
 
     return _request;    
 }
 
+/**
+ * Marca uma notificação de atualização de entregua como vista
+ * @param {int} trackingId ID do tracking a ser atualizado
+ */
+let setSeen = (trackingId) =>{
+    const _url = `${process.env.CarteiroAPIUrl}/tracking/${trackingId}/seen`;
+    const _request = axios.put(_url);
+
+    return _request;
+}
+
 module.exports = {
     addNewSubscribe,
-    getTrackings
+    getTrackings,
+    setSeen
 };
