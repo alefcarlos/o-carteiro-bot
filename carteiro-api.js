@@ -8,7 +8,7 @@ const axios = require('axios');
  * @param {*} address Informações da conversa
  */
 let addNewSubscribe = (trackingCode, addressInfo) => {
-    const _url = `${process.env.CarteiroAPIUrl}/subscribe`;
+    const _url = `${process.env.CarteiroAPIUrl}/subscriptions`;
     const _request = axios.post(_url, {
         code: trackingCode,
         address: addressInfo
