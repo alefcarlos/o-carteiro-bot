@@ -22,7 +22,7 @@ module.exports = [
             session.send(`Um momento enquanto salvo o número de rastreio **${_code}**...`);
             session.sendTyping();
 
-            carteiroAPI.addNewSubscribe(_code, session.message.address).then((result) => {
+            carteiroAPI.addNewTracking(_code, session.message.address).then((result) => {
                 session.endConversation('Ok, você será notifiacdo nas próximas atualizações ;)');
                 session.replaceDialog('finishingTalk'); //Devemos finalizar
 

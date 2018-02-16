@@ -3,12 +3,25 @@ const axios = require('axios');
 /*eslint no-console: ["error", { allow: ["warn","log","error"] }] */
 
 /**
+ * Adiciona um novo registro de noificação
+ * @param {*} address Informações da conversa
+ */
+let addNewSubscribe = (addressInfo) => {
+    const _url = `${process.env.CarteiroAPIUrl}/subscriptions`;
+    const _request = axios.post(_url, {
+        address: addressInfo
+    })
+
+    return _request;
+};
+
+/**
  * Adiciona um novo registro de monitoramento
  * @param {string} trackingCode Código de rastreio
  * @param {*} address Informações da conversa
  */
-let addNewSubscribe = (trackingCode, addressInfo) => {
-    const _url = `${process.env.CarteiroAPIUrl}/subscriptions`;
+let addNewTracking = (trackingCode, addressInfo) => {
+    const _url = `${process.env.CarteiroAPIUrl}/tracking`;
     const _request = axios.post(_url, {
         code: trackingCode,
         address: addressInfo
@@ -38,6 +51,7 @@ let setSeen = (trackingId) =>{
 
 module.exports = {
     addNewSubscribe,
+    addNewTracking,
     getTrackings,
     setSeen
 };
