@@ -92,24 +92,47 @@ bot.on('conversationUpdate', function (update) {
     }
 });
 
+// // Every 5 seconds, check for new registered users and start a new dialog
+// setInterval(function () {
+
+//     carteiroAPI.getTrackings()
+//         .then((result) => {
+//             const list = result.data.result;
+
+//             if (!list)
+//                 return;
+
+//             list.forEach((track) => {
+//                 bot.beginDialog(track.address, 'showTrackingUpdate', track)
+//             });
+//         })
+//         .catch((error) => {
+//             console.log(error);
+//         })
+// }, 10000);
+
+
 // Every 5 seconds, check for new registered users and start a new dialog
 setInterval(function () {
 
-    carteiroAPI.getTrackings()
+    carteiroAPI.getNotifications()
         .then((result) => {
             const list = result.data.result;
 
             if (!list)
                 return;
 
-            list.forEach((track) => {
-                bot.beginDialog(track.address, 'showTrackingUpdate', track)
+            list.forEach((message) => {
+                var msg = new builder.Message().address(message.address);
+                msg.text(message.message);
+                bot.send(msg);
             });
         })
         .catch((error) => {
             console.log(error);
         })
-}, 10000);
+}, 5000);
+
 
 // log any bot errors into the console
 bot.on('error', function (ex) {

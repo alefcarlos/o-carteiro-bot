@@ -38,6 +38,15 @@ let getTrackings = () =>{
     return _request;    
 }
 
+/** Obtém todas as notificações pendentes de leitura */
+let getNotifications = () =>{
+    const _url = `${process.env.CarteiroAPIUrl}/notify`;
+    const _request = axios.get(_url);
+
+    return _request;    
+}
+
+
 /**
  * Marca uma notificação de atualização de entregua como vista
  * @param {int} trackingId ID do tracking a ser atualizado
@@ -53,5 +62,6 @@ module.exports = {
     addNewSubscribe,
     addNewTracking,
     getTrackings,
-    setSeen
+    getNotifications,
+    setSeen,
 };
