@@ -31,28 +31,34 @@ let addNewTracking = (trackingCode, addressInfo) => {
 };
 
 /** Obtém todos os rastreios que têm informações atualizadas */
-let getTrackings = () =>{
+let getTrackings = () => {
     const _url = `${process.env.CarteiroAPIUrl}/tracking/notify`;
     const _request = axios.get(_url);
 
-    return _request;    
+    return _request;
 }
 
 /** Obtém todas as notificações pendentes de leitura */
-let getNotifications = () =>{
+let getNotifications = () => {
     const _url = `${process.env.CarteiroAPIUrl}/notify`;
     const _request = axios.get(_url);
 
-    return _request;    
+    return _request;
 }
 
+/** Atualiza todas as notificações como lida */
+let setNotificationsRead = () => {
+    const _url = `${process.env.CarteiroAPIUrl}/notify/seen`;
+    const _request = axios.put(_url);
+
+    return _request;
+}
 
 /**
- * Marca uma notificação de atualização de entregua como vista
- * @param {int} trackingId ID do tracking a ser atualizado
+ * Atualiza todas as notificações de tracking para lido
  */
-let setSeen = (trackingId) =>{
-    const _url = `${process.env.CarteiroAPIUrl}/tracking/${trackingId}/seen`;
+let setTrackingsSeen = () => {
+    const _url = `${process.env.CarteiroAPIUrl}/tracking/seen`;
     const _request = axios.put(_url);
 
     return _request;
@@ -63,5 +69,6 @@ module.exports = {
     addNewTracking,
     getTrackings,
     getNotifications,
-    setSeen,
+    setNotificationsRead,
+    setTrackingsSeen,
 };

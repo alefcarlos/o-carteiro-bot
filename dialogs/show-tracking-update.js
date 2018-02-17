@@ -29,10 +29,4 @@ module.exports = function (session, args) {
         .text(_entityToUpdate.lastDestination));
 
     session.send(msg).endDialog();
-
-    carteiroAPI.setSeen(args.id)
-        .then(() => { })
-        .catch((error) => {
-            console.log(error.message);
-        });
 }
