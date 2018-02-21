@@ -94,7 +94,11 @@ let geUserNameFromChannel = (session) => {
     //Veriicar se o canal é um dos acima e se a propriedade session.mssage.address.user.name tem valor
     session.send(JSON.stringify(available));
 
-    if (!available[channel])
+    const exist = available.findIndex((value) => {
+        return value == channel;
+    })
+
+    if (exist >= 0)
         return '';
 
     session.send('Obtetevo chanel ' + channel);
