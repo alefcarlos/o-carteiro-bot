@@ -81,7 +81,7 @@ bot.on('conversationUpdate', function (update) {
     if (update.membersAdded) {
 
         update.membersAdded.forEach((identity) => {
-            if (identity.id !== update.address.bot.id) {
+            if (identity.id == update.address.bot.id) {
                 const reply = new builder.Message()
                     .address(update.address)
                     .text('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)<br> Diga **Oi**');
@@ -92,60 +92,61 @@ bot.on('conversationUpdate', function (update) {
     }
 });
 
-//A cada 1 hora verifica se têm novas notificações
-setInterval(function () {
+if (process.env.CarteiroAPIUrl) {
+    //A cada 1 hora verifica se têm novas notificações
+    setInterval(function () {
 
-    carteiroAPI.getTrackings()
-        .then((result) => {
-            //Lista de usuários que requisitaram ser notificados
-            const list = result.data.result;
+        carteiroAPI.getTrackings()
+            .then((result) => {
+                //Lista de usuários que requisitaram ser notificados
+                const list = result.data.result;
 
-            if (!list)
-                return;
+                if (!list)
+                    return;
 
-            list.forEach((user) => {
-                user.trackings.forEach((track) => {
-                    bot.beginDialog(user.address, 'showTrackingUpdate', track);
+                list.forEach((user) => {
+                    user.trackings.forEach((track) => {
+                        bot.beginDialog(user.address, 'showTrackingUpdate', track);
+                    });
+
+                    carteiroAPI.setTrackingsSeen()
+                        .then(() => { console.log('trackings atualizados com sucesso.'); })
+                        .catch((error) => {
+                            console.log('Erro ao atualizar os trackings para lido' + error);
+                        });
+                });
+            })
+            .catch((error) => {
+                console.log('erro ao obter as informações de trackings ' + error);
+            })
+
+        carteiroAPI.getNotifications()
+            .then((result) => {
+                const list = result.data.result;
+
+                if (!list)
+                    return;
+
+                list.forEach((message) => {
+                    var msg = new builder.Message().address(message.address);
+                    msg.text(message.message);
+                    bot.send(msg);
                 });
 
-                carteiroAPI.setTrackingsSeen()
-                    .then(() => { console.log('trackings atualizados com sucesso.'); })
+                //Setar a mensagens como lidas
+                carteiroAPI.setNotificationsRead()
+                    .then(() => {
+                        console.log('As notificações foram atualizadas com sucesso.');
+                    })
                     .catch((error) => {
-                        console.log('Erro ao atualizar os trackings para lido' + error);
-                    });
-            });
-        })
-        .catch((error) => {
-            console.log('erro ao obter as informações de trackings ' + error);
-        })
-
-    carteiroAPI.getNotifications()
-        .then((result) => {
-            const list = result.data.result;
-
-            if (!list)
-                return;
-
-            list.forEach((message) => {
-                var msg = new builder.Message().address(message.address);
-                msg.text(message.message);
-                bot.send(msg);
-            });
-
-            //Setar a mensagens como lidas
-            carteiroAPI.setNotificationsRead()
-                .then(() => {
-                    console.log('As notificações foram atualizadas com sucesso.');
-                })
-                .catch((error) => {
-                    console.log('Erro ao atualizar notificações ' + error);
-                })
-        })
-        .catch((error) => {
-            console.log(error);
-        })
-}, 5000); //60000 = 1 minuto
-
+                        console.log('Erro ao atualizar notificações ' + error);
+                    })
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+    }, 5000); //60000 = 1 minuto
+}
 
 // log any bot errors into the console
 bot.on('error', function (ex) {

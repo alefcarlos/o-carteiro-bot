@@ -17,13 +17,17 @@ module.exports = function (session, args) {
 
     session.send(msg);
 
-    if (carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
+    if (process.env.CarteiroAPIUrl) {
+        if (carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
+            session.replaceDialog('finishingTalk'); //Devemos finalizar
+        }
+        else {
+            //devemos iniciar o diálogo que pergunta se deseja ser notificado
+            // requestTracking(session);
+            session.replaceDialog('askForTrackingUpdate');
+        }
+    } else {
         session.replaceDialog('finishingTalk'); //Devemos finalizar
-    }
-    else {
-        //devemos iniciar o diálogo que pergunta se deseja ser notificado
-        // requestTracking(session);
-        session.replaceDialog('askForTrackingUpdate');
     }
 
 };
