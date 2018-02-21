@@ -98,7 +98,7 @@ let geUserNameFromChannel = (session) => {
         return value == channel;
     })
 
-    if (exist >= 0)
+    if (exist == -1)
         return '';
 
     session.send('Obtetevo chanel ' + channel);
@@ -115,6 +115,11 @@ let geUserNameFromChannel = (session) => {
 bot.dialog('recognizerUser', [
     function (session, args, next) {
         //Verificar usuário do canal
+        if (session.userData.userName){
+            session.replaceDialog('instructions');
+            return;
+        }
+
         let _user = geUserNameFromChannel(session);
         
         if (_user)
