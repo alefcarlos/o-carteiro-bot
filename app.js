@@ -62,6 +62,8 @@ const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({ recognizers: [recognizer] })
     .matches('Greeting', (session) => {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
+        session.send(JSON.stringify(session.message.address));
+
         session.replaceDialog('recognizerUser');
     })
     .matches('Tracking.Find', 'askForTrackingCode')
