@@ -2,14 +2,15 @@
   "name": "echo-bot",
   "version": "1.0.0",
   "description": "Um bot que ecoa o que o usuário digitou",
-  "main": "src/app.js",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/app.js"
+    "start": "node app.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.17.1",
     "azure-cognitiveservices-textanalytics": "^1.0.0-preview",
     "botbuilder": "^3.14.0",
     "botbuilder-azure": "^3.0.4",
