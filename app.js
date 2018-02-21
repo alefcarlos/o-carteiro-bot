@@ -107,10 +107,13 @@ let geUserNameFromChannel = (session) => {
 //Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
     function (session, args, next) {
-        //Verificar usuário 
-        let _user = geUserNameFromChannel(session) || session.userData.userName;
+        //Verificar usuário do canal
+        let _user = geUserNameFromChannel(session);
+        
+        if (_user)
+            session.userData.userName = _user;
 
-        if (_user) {
+        if (session.userData.userName) {
             session.replaceDialog('instructions');
         }
         else {
