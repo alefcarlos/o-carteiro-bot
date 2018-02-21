@@ -62,8 +62,6 @@ const recognizer = new builder.LuisRecognizer(LuisModelUrl);
 const intents = new builder.IntentDialog({ recognizers: [recognizer] })
     .matches('Greeting', (session) => {
         session.send('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)');
-        session.send(JSON.stringify(session.message.address));
-
         session.replaceDialog('recognizerUser');
     })
     .matches('Tracking.Find', 'askForTrackingCode')
@@ -89,11 +87,28 @@ bot.dialog('instructions', function (session) {
     session.send(msg).endDialog();
 });
 
+let geUserNameFromChannel = (session) => {
+    const available = ['facebook', 'skype'];
+    const channel = session.message.address.channelId;
+
+    //Veriicar se o canal é um dos acima e se a propriedade session.mssage.address.user.name tem valor
+    
+    if (!available[channel])
+        return '';
+
+    const user = session.message.address.user;
+
+    if (user.name == undefined && user.name == '')
+        return '';
+
+    return user;
+}
+
 //Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
     function (session, args, next) {
-        //Verificar usuário
-        let _user = session.userData.userName;
+        //Verificar usuário 
+        let _user = geUserNameFromChannel(session) || session.userData.userName;
 
         if (_user) {
             session.replaceDialog('instructions');
