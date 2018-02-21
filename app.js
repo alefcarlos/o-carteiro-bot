@@ -92,13 +92,16 @@ let geUserNameFromChannel = (session) => {
     const channel = session.message.address.channelId;
 
     //Veriicar se o canal é um dos acima e se a propriedade session.mssage.address.user.name tem valor
-    
+    session.send(JSON.stringify(available));
+
     if (!available[channel])
         return '';
 
+    session.send('Obtetevo chanel ' + channel);
     const user = session.message.address.user;
+    session.send(JSON.stringify(user));
 
-    if (user.name == undefined && user.name == '')
+    if (user.name == undefined)
         return '';
 
     return user;
