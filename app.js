@@ -78,12 +78,12 @@ bot.dialog('instructions', function (session) {
     const msg = new builder.Message(session)
         .text(`${session.userData.userName}, diga o que você gostaria de fazer, por exemplo: 'rastrear meu item' ou 'ver histórico de pesquisa'. Você pode até me passar o código junto: rastrear AA100833276BR"`)
         .suggestedActions(
-        builder.SuggestedActions.create(
-            session, [
-                builder.CardAction.imBack(session, "rastrear", "Rastrear"),
-                builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
-            ]
-        ));
+            builder.SuggestedActions.create(
+                session, [
+                    builder.CardAction.imBack(session, "rastrear", "Rastrear"),
+                    builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
+                ]
+            ));
     session.send(msg).endDialog();
 });
 
@@ -110,16 +110,18 @@ let geUserNameFromChannel = (session) => {
 bot.dialog('recognizerUser', [
     function (session, args, next) {
 
-        if (session.userData.userName){
+        if (session.userData.userName) {
             session.replaceDialog('instructions');
             return;
         }
 
         //Verificar usuário do canal
         let _user = geUserNameFromChannel(session);
-        
-        if (_user)
+
+        if (_user) {
             session.userData.userName = _user;
+            session.userData.trackingHistory = [];
+        }
 
         if (session.userData.userName) {
             session.replaceDialog('instructions');
@@ -204,9 +206,9 @@ bot.dialog('seeTrackingHistory', [
             const msg = new builder.Message(session)
                 .text(`${session.userData.userName}, não encontrei itens para exibir, que tal rastrear agora ?`)
                 .suggestedActions(
-                builder.SuggestedActions.create(
-                    session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
-                ));
+                    builder.SuggestedActions.create(
+                        session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
+                    ));
 
             session.send(msg).endConversation();
         }
