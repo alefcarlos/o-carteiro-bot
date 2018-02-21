@@ -91,9 +91,6 @@ let geUserNameFromChannel = (session) => {
     const available = ['facebook', 'skype'];
     const channel = session.message.address.channelId;
 
-    //Veriicar se o canal é um dos acima e se a propriedade session.mssage.address.user.name tem valor
-    session.send(JSON.stringify(available));
-
     const exist = available.findIndex((value) => {
         return value == channel;
     })
@@ -101,25 +98,24 @@ let geUserNameFromChannel = (session) => {
     if (exist == -1)
         return '';
 
-    session.send('Obtetevo chanel ' + channel);
     const user = session.message.address.user;
-    session.send(JSON.stringify(user));
 
     if (user.name == undefined)
         return '';
 
-    return user;
+    return user.name;
 }
 
 //Diálogo que reconhece o usuário
 bot.dialog('recognizerUser', [
     function (session, args, next) {
-        //Verificar usuário do canal
+
         if (session.userData.userName){
             session.replaceDialog('instructions');
             return;
         }
 
+        //Verificar usuário do canal
         let _user = geUserNameFromChannel(session);
         
         if (_user)
