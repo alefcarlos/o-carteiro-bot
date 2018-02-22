@@ -66,13 +66,13 @@ const intents = new builder.IntentDialog({ recognizers: [recognizer] })
     });
 
 bot.dialog('/', intents);
+bot.dialog('showTrackingIsFinished,', require('./dialogs/tracking-is-finished'));
 bot.dialog('instructions', require('./dialogs/instructions'));
 bot.dialog('recognizerUser', require('./dialogs/recognizer-user'));
 bot.dialog('seeTrackingHistory', require('./dialogs/tracking-history'));
 bot.dialog('finishingTalk', require('./dialogs/finish-talking'));
 bot.dialog('trackingInfo', require('./dialogs/tracking-info'));
 bot.dialog('askForTrackingUpdate', require('./dialogs/ask-for-tracking-update'));
-bot.dialog('showTrackingFinished,', require('./dialogs/tracking-is-finished'));
 bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
 bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
 

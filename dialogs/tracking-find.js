@@ -55,7 +55,9 @@ module.exports = [
             const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, trackingInfo.code);
 
             if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
-                session.replaceDialog('showTrackingFinished', { trackingCode: trackingInfo.code });
+                // session.replaceDialog('showTrackingIsFinished', { trackingCode: trackingInfo.code });
+                session.send(`De acordo com seu histórico de rastreio, o item ${trackingInfo.code} já consta como entregue ;)`);
+                session.replaceDialog('finishingTalk');
             }
             else {
                 requestTracking(session);
