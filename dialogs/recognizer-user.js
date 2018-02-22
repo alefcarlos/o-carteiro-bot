@@ -48,7 +48,7 @@ module.exports = [
             return;
         }
 
-        _user = 'Alef';//geUserNameFromChannel(session);
+        _user = geUserNameFromChannel(session);
 
         if (_user) {
             session.userData.userName = _user;
