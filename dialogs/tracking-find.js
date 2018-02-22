@@ -36,12 +36,17 @@ module.exports = [
         }
     },
     function (session, results) {
+        session.send('tentando obter código de rastreio');
         //Obter o código de rastreio, se já veio informado  ignorar
         const trackingInfo = session.conversationData.tracking;
+
+        session.send(`${JSON.stringify(trackingInfo)}`);
 
         if (results.response) {
             trackingInfo.code = results.response.trim().toUpperCase();
         }
+
+        session.send(`${JSON.stringify(trackingInfo)}`);
 
         //Verifica se o código passado é válido para requisição
         const _isCodeValid = (/^([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/).test(trackingInfo.code);
@@ -67,7 +72,7 @@ module.exports = [
 //Métodos auxiliares
 let requestTracking = (session) => {
     session.send(JSON.stringify(session.conversationData));
-    
+
     const trackingCode = session.conversationData.tracking.code;
     let _msg = `Aguarde um momento enquanto busco as informações do código ${trackingCode}`;
     session.send(_msg);
