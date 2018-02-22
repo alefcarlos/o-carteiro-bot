@@ -48,11 +48,12 @@ module.exports = [
             return;
         }
 
-        _user = geUserNameFromChannel(session);
+        _user = 'Alef';//geUserNameFromChannel(session);
 
         if (_user) {
             session.userData.userName = _user;
             session.userData.trackingHistory = [];
+            session.replaceDialog('instructions');
             return;
         }
 
