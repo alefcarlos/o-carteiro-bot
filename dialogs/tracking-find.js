@@ -66,6 +66,8 @@ module.exports = [
 
 //Métodos auxiliares
 let requestTracking = (session) => {
+    session.send(JSON.stringify(session.conversationData));
+    
     const trackingCode = session.conversationData.tracking.code;
     let _msg = `Aguarde um momento enquanto busco as informações do código ${trackingCode}`;
     session.send(_msg);
