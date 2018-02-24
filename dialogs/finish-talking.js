@@ -14,7 +14,7 @@ const options = [
 //Após a exibição do resultado da busca, devemos perguntar o que ele achou do nosso serviço
 module.exports = [
     function (session) {
-        builder.Prompts.choice(session, `${session.userData.userName}, como foi sua experiência ? É importate para eu melhorar meus serviços ;)`, options, { listStyle: builder.ListStyle.auto });
+        builder.Prompts.choice(session, `${session.userData.userName}, como foi sua experiência ? É importate para eu melhorar meus serviços ;)`, options, { listStyle: builder.ListStyle.button });
     },
     function (session, results) {
         session.endConversation(`**${results.response.entity}**, muito obrigado pela resposta!`);
