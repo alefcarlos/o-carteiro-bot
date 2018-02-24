@@ -3,17 +3,42 @@ const carteiroUtils = require('../carteiro-utils');
 
 // Diálogo que mostra o resultado da pesquisa
 module.exports = function (session, args) {
-    const msg = new builder.Message(session);
+    // const msg = new builder.Message(session);
     const _data = args.data;
     const _lastEvent = _data.evento[0];
 
     //Armazenar informações do rastreio do usuário
     const _trackingIndex = addUserTrackingHistory(session, _data);
 
-    msg.addAttachment(new builder.HeroCard(session)
-        .title(`${_lastEvent.descricao}`)
-        .subtitle(carteiroUtils.getTrackingDestination(_data))
-        .text(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`));
+    // msg.addAttachment(new builder.HeroCard(session)
+    //     .title(`${_lastEvent.descricao}`)
+    //     .subtitle(carteiroUtils.getTrackingDestination(_data))
+    //     .text(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`));
+
+    var msg = new builder.Message(session)
+        .addAttachment({
+            contentType: "application/vnd.microsoft.card.adaptive",
+            content: {
+                type: "AdaptiveCard",
+                body: [
+                    {
+                        "type": "TextBlock",
+                        "text": `${_lastEvent.descricao}`,
+                        "size": "large",
+                        "weight": "bolder"
+                    },
+                    {
+                        "type": "TextBlock",
+                        "text": `${carteiroUtils.getTrackingDestination(_data)}`,
+                        "weight": "bolder"
+                    },
+                    {
+                        "type": "TextBlock",
+                        "text": `Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`
+                    }
+                ]
+            }
+        });
 
     session.send(msg);
 

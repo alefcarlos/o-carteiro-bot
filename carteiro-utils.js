@@ -86,7 +86,10 @@ let getTrackingDestination = (info) => {
     //Objeto ainda não entregue, então devemos ler a informação da propriedade destino
     const _destination = _lastEvent.destino;
 
-    return `[${_destination.local}] ${_destination.cidade} - ${_destination.uf}`;
+    if (_destination.cidade)
+        return `[${_destination.local}] ${_destination.cidade} - ${_destination.uf}`;
+
+    return `[${_destination.local}] - ${_destination.uf}`;
 };
 
 module.exports = {
