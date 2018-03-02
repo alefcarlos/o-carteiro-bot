@@ -85,7 +85,7 @@ bot.on('conversationUpdate', function (update) {
         update.membersAdded.forEach((identity) => {
             console.log("[docs/app.js]On: forEach");
 
-            if (identity.id == update.address.bot.id) {
+            if (identity.id != update.address.bot.id) {
                 console.log("[docs/app.js]On: bot entrou, enviando mensagem");
                 console.log(`[docs/app.js]On: update.address ${JSON.stringify(update.address)}`);
 
