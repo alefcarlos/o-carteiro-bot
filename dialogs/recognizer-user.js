@@ -30,6 +30,9 @@ let geUserNameFromChannel = (session) => {
 module.exports = [
     function (session, args, next) {
 
+        console.log("Tentando reconhecer o usuário..")
+        console.log("CarteiroAPI está ativado ?" + process.env.CarteiroAPIUrl)
+
         if (process.env.CarteiroAPIUrl) {
             //Adicionar uma nova inscrição de notificação
             carteiroAPI.addNewSubscribe(session.message.address).then((result) => {
