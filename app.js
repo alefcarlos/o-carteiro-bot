@@ -80,14 +80,21 @@ bot.on('conversationUpdate', function (update) {
     console.log("[docs/app.js]On: conversationUpdate");
 
     if (update.membersAdded) {
+        console.log("[docs/app.js]On: update.membersAdded");
 
         update.membersAdded.forEach((identity) => {
+            console.log("[docs/app.js]On: forEach");
+
             if (identity.id == update.address.bot.id) {
+                console.log("[docs/app.js]On: bot entrou, enviando mensagem");
+
                 const reply = new builder.Message()
                     .address(update.address)
                     .text('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)<br> Diga **Oi**');
 
                 bot.send(reply);
+
+                console.log("[docs/app.js]On: bot entrou, mensagem enviada.");
             }
         });
     }
