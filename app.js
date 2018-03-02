@@ -87,6 +87,7 @@ bot.on('conversationUpdate', function (update) {
 
             if (identity.id == update.address.bot.id) {
                 console.log("[docs/app.js]On: bot entrou, enviando mensagem");
+                console.log(`[docs/app.js]On: update.address ${JSON.stringify(update.address)}`);
 
                 const reply = new builder.Message()
                     .address(update.address)
