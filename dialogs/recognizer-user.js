@@ -27,45 +27,32 @@ let geUserNameFromChannel = (session) => {
 }
 
 //Diálogo que reconhece o usuário
-module.exports = [
-    function (session, args, next) {
+module.exports = function (session, args, next) {
 
-        console.log("Tentando reconhecer o usuário..")
-        console.log("CarteiroAPI está ativado ?" + process.env.CarteiroAPIUrl)
+    console.log("Tentando reconhecer o usuário..")
+    console.log(`CarteiroAPI está ativado ? ${process.env.CarteiroAPIUrl != undefined}`)
 
-        if (process.env.CarteiroAPIUrl) {
-            //Adicionar uma nova inscrição de notificação
-            carteiroAPI.addNewSubscribe(session.message.address).then((result) => {
-                console.log('[recognize-user] Sucesso ao adicionar usuário com notificação');
-            }).catch((error) => {
-                console.log('[recognize-user] Erro ao adicionar usuário com notificação');
-                console.log(error);
-            });
-        }
-
-        //Verificar usuário
-        let _user = session.userData.userName;
-
-        if (_user) {
-            session.replaceDialog('instructions');
-            return;
-        }
-
-        _user = geUserNameFromChannel(session);
-
-        if (_user) {
-            session.userData.userName = _user;
-            session.userData.trackingHistory = [];
-            session.replaceDialog('instructions');
-            return;
-        }
-
-        builder.Prompts.text(session, 'Opa, primeiro vamo nos conhecer. Qual seu nome ?');
-    },
-    function (session, results) {
-        session.userData.userName = results.response.trim();
-        session.userData.trackingHistory = [];
-
-        session.replaceDialog('instructions');
+    if (process.env.CarteiroAPIUrl) {
+        //Adicionar uma nova inscrição de notificação
+        carteiroAPI.addNewSubscribe(session.message.address).then((result) => {
+            console.log('[recognize-user] Sucesso ao adicionar usuário com notificação');
+        }).catch((error) => {
+            console.log('[recognize-user] Erro ao adicionar usuário com notificação');
+            console.log(error);
+        });
     }
-];
+
+    //Verificar usuário(Facebook e Skype, somente)
+    let _user = session.userData.userName;
+
+    if (_user) {
+        session.replaceDialog('instructions');
+        return;
+    }
+
+    _user = geUserNameFromChannel(session);
+
+    session.userData.userName = _user;
+    session.userData.trackingHistory = [];
+    session.replaceDialog('instructions');
+};

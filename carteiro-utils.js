@@ -92,10 +92,34 @@ let getTrackingDestination = (info) => {
     return `[${_destination.local}] - ${_destination.uf}`;
 };
 
+/**
+ * Retorna o nome do usuário, somente para Skype e Facebook, senão retorna vazio
+ * @param {*} session Informações da sessão do chat
+ */
+let getUserName = (session) => {
+    if (session.userData.userName)
+        return session.userData.userName;
+
+    return "";
+}
+
+/**
+ * Retorna uma mensagem concatenado com o nome do usuário(Facebook e skype) no ínicio
+ * @param {*} session Informações da sessão do chat
+ * @param {string} message Mensagem a ser formatada
+ */
+let formatMessageWithUserName = (session, message) => {
+    const _userName = getUserName(session);
+    
+    return (_userName) ? `${_userName}, ${message}` : message;
+};
+
 module.exports = {
     tracakingFinishedList,
     getTrackingIndex,
     trackingIsFinished,
     getTrackingDestination,
-    trackingInfoToHistory
+    trackingInfoToHistory,
+    getUserName,
+    formatMessageWithUserName
 };

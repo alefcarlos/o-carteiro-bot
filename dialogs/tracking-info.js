@@ -10,11 +10,6 @@ module.exports = function (session, args) {
     //Armazenar informações do rastreio do usuário
     const _trackingIndex = addUserTrackingHistory(session, _data);
 
-    // msg.addAttachment(new builder.HeroCard(session)
-    //     .title(`${_lastEvent.descricao}`)
-    //     .subtitle(carteiroUtils.getTrackingDestination(_data))
-    //     .text(`Última atualização: ${_lastEvent.data} às ${_lastEvent.hora}`));
-
     var msg = new builder.Message(session)
         .addAttachment({
             contentType: "application/vnd.microsoft.card.adaptive",

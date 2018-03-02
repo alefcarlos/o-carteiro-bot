@@ -1,4 +1,6 @@
 const builder = require('botbuilder');
+const carteiroUtils = require('../carteiro-utils');
+
 // const CognitiveServicesCredentials = require('ms-rest-azure').CognitiveServicesCredentials;
 // const TextAnalyticsAPIClient = require('azure-cognitiveservices-textanalytics');
 
@@ -14,7 +16,9 @@ const options = [
 //Após a exibição do resultado da busca, devemos perguntar o que ele achou do nosso serviço
 module.exports = [
     function (session) {
-        builder.Prompts.choice(session, `${session.userData.userName}, como foi sua experiência ? É importate para eu melhorar meus serviços ;)`, options, { listStyle: builder.ListStyle.button });
+        const msg = carteiroUtils.formatMessageWithUserName(session, 'Como foi sua experiência ? É importate para eu melhorar meus serviços ;)')
+        
+        builder.Prompts.choice(session, msg, options, { listStyle: builder.ListStyle.button });
     },
     function (session, results) {
         session.endConversation(`**${results.response.entity}**, muito obrigado pela resposta!`);

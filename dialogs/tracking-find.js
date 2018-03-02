@@ -27,9 +27,9 @@ module.exports = [
         // Prompt for tracking code
         if (!trackingInfo.code) {
             if (args && args.reprompt)
-                builder.Prompts.text(session, `${session.userData.userName}, não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.`);
+                builder.Prompts.text(session, carteiroUtils.formatMessageWithUserName(session, 'Não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.'));
             else
-                builder.Prompts.text(session, 'Qual código você gostaria de rastrear?');
+                builder.Prompts.text(session, carteiroUtils.formatMessageWithUserName(session, 'Qual código você gostaria de rastrear?'));
         }
         else {
             next();
@@ -50,6 +50,10 @@ module.exports = [
             session.replaceDialog('askForTrackingCode', { reprompt: true }); // Repeat the dialog
         }
         else {
+
+            //Caso o usuário não tenha sido identificado
+            if (session.userData.trackingHistory == undefined)
+                session.userData.trackingHistory = [];
 
             //Código existe no histórico de pesquisa do usuário e está marcado como entregue, devemos simplesmente informar e não pesquisar na base dos correios
             const _trackingIndex = carteiroUtils.getTrackingIndex(session.userData.trackingHistory, trackingInfo.code);
@@ -88,7 +92,7 @@ let requestTracking = (session) => {
             session.replaceDialog('trackingInfo', { data: result[0] });
         }
 
-        
+
     }).catch(() => {
         session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
     });

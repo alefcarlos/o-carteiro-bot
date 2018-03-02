@@ -3,13 +3,16 @@ const carteiroUtils = require('../carteiro-utils');
 
 //Diálogo para mostrar os itens do histórico do usuário
 module.exports = function (session) {
+    if (session.userData.trackingHistory == undefined)
+        session.userData.trackingHistory = [];
+        
     if (session.userData.trackingHistory.length === 0) {
         const msg = new builder.Message(session)
-            .text(`${session.userData.userName}, não encontrei itens para exibir, que tal rastrear agora ?`)
+            .text(carteiroUtils.formatMessageWithUserName(session, 'Não encontrei itens para exibir, que tal rastrear agora ?'))
             .suggestedActions(
-            builder.SuggestedActions.create(
-                session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
-            ));
+                builder.SuggestedActions.create(
+                    session, [builder.CardAction.imBack(session, "rastrear", "Rastrear")]
+                ));
 
         session.send(msg).endConversation();
     }
