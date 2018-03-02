@@ -3,6 +3,8 @@ const carteiroUtils = require('../carteiro-utils');
 
 // Diálogo que mostra o resultado da pesquisa
 module.exports = function (session, args) {
+    console.log("[docs/tracking-info.js]Iniciando diálogo: tracking-info");
+
     // const msg = new builder.Message(session);
     const _data = args.data;
     const _lastEvent = _data.evento[0];

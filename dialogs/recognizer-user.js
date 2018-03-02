@@ -28,9 +28,10 @@ let geUserNameFromChannel = (session) => {
 
 //Diálogo que reconhece o usuário
 module.exports = function (session, args, next) {
+    console.log("[docs/instructions.js]Iniciando diálogo: recognizer-user");
 
-    console.log("Tentando reconhecer o usuário..")
-    console.log(`CarteiroAPI está ativado ? ${process.env.CarteiroAPIUrl != undefined}`)
+    console.log("[docs/recognizer-user]Tentando reconhecer o usuário..")
+    console.log(`[docs/recognizer-user]CarteiroAPI está ativado ? ${process.env.CarteiroAPIUrl != undefined}`)
 
     if (process.env.CarteiroAPIUrl) {
         //Adicionar uma nova inscrição de notificação
@@ -51,6 +52,8 @@ module.exports = function (session, args, next) {
     }
 
     _user = geUserNameFromChannel(session);
+
+    console.log(`[docs/recognizer-user]Nome do usuário: ${_user}`);
 
     session.userData.userName = _user;
     session.userData.trackingHistory = [];

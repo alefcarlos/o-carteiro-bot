@@ -3,6 +3,8 @@ const carteiroUtils = require('../carteiro-utils');
 
 //Diálogo para mostrar os itens do histórico do usuário
 module.exports = function (session) {
+    console.log("[docs/tracking-history.js]Iniciando diálogo: tracking-history");
+        
     if (session.userData.trackingHistory == undefined)
         session.userData.trackingHistory = [];
         

@@ -77,6 +77,7 @@ bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
 bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
 
 bot.on('conversationUpdate', function (update) {
+    console.log("[docs/app.js]On: conversationUpdate");
 
     if (update.membersAdded) {
 
@@ -150,5 +151,7 @@ if (process.env.CarteiroAPIUrl) {
 
 // log any bot errors into the console
 bot.on('error', function (ex) {
+    console.log("[docs/app.js]On: error");
+
     console.log('And error ocurred', ex);
 });

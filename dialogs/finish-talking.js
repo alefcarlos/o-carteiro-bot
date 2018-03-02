@@ -16,11 +16,14 @@ const options = [
 //Após a exibição do resultado da busca, devemos perguntar o que ele achou do nosso serviço
 module.exports = [
     function (session) {
+        console.log("[docs/finish-talking.js]Iniciando diálogo: finish-talking");
+
         const msg = carteiroUtils.formatMessageWithUserName(session, 'Como foi sua experiência ? É importate para eu melhorar meus serviços ;)')
         
         builder.Prompts.choice(session, msg, options, { listStyle: builder.ListStyle.button });
     },
     function (session, results) {
+        console.log("[docs/finish-talking.js]Iniciando diálogo: finish-talking[2]");
         session.endConversation(`**${results.response.entity}**, muito obrigado pela resposta!`);
 
         // session.sendTyping();

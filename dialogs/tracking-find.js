@@ -5,9 +5,15 @@ const carteiroUtils = require('../carteiro-utils');
 //Perguntar sobre o código de rastreio
 module.exports = [
     function (session, args, next) {
+        console.log("[docs/tracking-find.js]Iniciando diálogo: tracking-find");
+
+        console.log(`[docs/tracking-find.js]É uma nova tentativa de digitar o código ? ${args.reprompt != undefined}`);
+
         // Resolve and store any Tracking.Code entity passed from LUIS.
         let _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
         let _trackingCode = _code ? _code.entity.toUpperCase() : '';
+
+        console.log(`[docs/tracking-find.js]Encontrou código de rastreio via luis ? ${_trackingCode != ''}`)
 
         if (!_code) {
 
@@ -18,24 +24,31 @@ module.exports = [
 
             if (_found)
                 _trackingCode = _found[0].toUpperCase();
+
+            console.log(`[docs/tracking-find.js]Encontrou código de rastreio via regex ? ${_trackingCode != ''}`)
         }
 
-        const trackingInfo = session.conversationData.tracking = {
+        session.conversationData.tracking = {
             code: _trackingCode
         };
 
         // Prompt for tracking code
-        if (!trackingInfo.code) {
+        if (!_trackingCode) {
+            console.log("[docs/tracking-find.js]Não obtivemos o código de rastreio, então perguntar pelo mesmo")
+
             if (args && args.reprompt)
                 builder.Prompts.text(session, carteiroUtils.formatMessageWithUserName(session, 'Não entendi. Informe o código do rastreio, contém até 13 digitos. Exemplo: AA100833276BR.'));
             else
                 builder.Prompts.text(session, carteiroUtils.formatMessageWithUserName(session, 'Qual código você gostaria de rastrear?'));
         }
         else {
+            console.log(`[docs/tracking-find.js]Já temos o código [${_trackingCode}] então, rastrear!`)
             next();
         }
     },
     function (session, results) {
+        console.log("[docs/tracking-find.js]Iniciando diálogo: tracking-find[2]");
+        
         //Obter o código de rastreio, se já veio informado  ignorar
         const trackingInfo = session.conversationData.tracking;
 
