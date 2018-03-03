@@ -18,7 +18,7 @@ server.listen(process.env.port || process.env.PORT || 3978, function () {
 const documentDbOptions = {
     host: process.env.AzureDocumentDBURI,
     masterKey: process.env.AzureDocumentDBKey,
-    database: 'botdocs',
+    database: 'carteirobot',
     collection: 'carteirobot-data'
 };
 
