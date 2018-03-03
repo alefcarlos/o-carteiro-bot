@@ -24,8 +24,8 @@ module.exports = [
     },
     function (session, results) {
         console.log("[docs/finish-talking.js]Iniciando diálogo: finish-talking[2]");
-        session.endConversation(`**${results.response.entity}**, muito obrigado pela resposta!`);
-
+        session.send(`**${results.response.entity}**, muito obrigado pela resposta!`);
+        session.endConversation();
         // session.sendTyping();
 
         // // Creating the Cognitive Services credentials
