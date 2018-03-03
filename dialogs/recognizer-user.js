@@ -29,6 +29,7 @@ let geUserNameFromChannel = (session) => {
 //Diálogo que reconhece o usuário
 module.exports = function (session, args, next) {
     console.log("[docs/instructions.js]Iniciando diálogo: recognizer-user");
+    console.log(`Ambiente do bot ${process.env.BotEnv}`);
 
     console.log("[docs/recognizer-user]Tentando reconhecer o usuário..")
     console.log(`[docs/recognizer-user]CarteiroAPI está ativado ? ${process.env.CarteiroAPIUrl != undefined}`)
