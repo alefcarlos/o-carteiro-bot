@@ -76,30 +76,30 @@ bot.dialog('askForTrackingUpdate', require('./dialogs/ask-for-tracking-update'))
 bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
 bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
 
-bot.on('conversationUpdate', function (update) {
-    console.log("[docs/app.js]On: conversationUpdate");
+// bot.on('conversationUpdate', function (update) {
+//     console.log("[docs/app.js]On: conversationUpdate");
 
-    if (update.membersAdded) {
-        console.log("[docs/app.js]On: update.membersAdded");
+//     if (update.membersAdded) {
+//         console.log("[docs/app.js]On: update.membersAdded");
 
-        update.membersAdded.forEach((identity) => {
-            console.log("[docs/app.js]On: forEach");
+//         update.membersAdded.forEach((identity) => {
+//             console.log("[docs/app.js]On: forEach");
 
-            if (identity.id != update.address.bot.id) {
-                console.log("[docs/app.js]On: bot entrou, enviando mensagem");
-                console.log(`[docs/app.js]On: update.address ${JSON.stringify(update.address)}`);
+//             if (identity.id != update.address.bot.id) {
+//                 console.log("[docs/app.js]On: bot entrou, enviando mensagem");
+//                 console.log(`[docs/app.js]On: update.address ${JSON.stringify(update.address)}`);
 
-                const reply = new builder.Message()
-                    .address(update.address)
-                    .text('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)<br> Diga **Oi**');
+//                 const reply = new builder.Message()
+//                     .address(update.address)
+//                     .text('Olá, eu sou Carteiro, posso te ajudar com o rastreio de itens do correios ;)<br> Diga **Oi**');
 
-                bot.send(reply);
+//                 bot.send(reply);
 
-                console.log("[docs/app.js]On: bot entrou, mensagem enviada.");
-            }
-        });
-    }
-});
+//                 console.log("[docs/app.js]On: bot entrou, mensagem enviada.");
+//             }
+//         });
+//     }
+// });
 
 if (process.env.CarteiroAPIUrl) {
     //A cada 1 hora verifica se têm novas notificações
