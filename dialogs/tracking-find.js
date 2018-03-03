@@ -74,7 +74,7 @@ module.exports = [
             if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
                 // session.replaceDialog('showTrackingIsFinished', { trackingCode: trackingInfo.code });
                 session.send(`De acordo com seu histórico de rastreio, o item ${trackingInfo.code} já consta como entregue ;)`);
-                session.replaceDialog('finishingTalk');
+                session.beginDialog('finishingTalk');
             }
             else {
                 requestTracking(session);
@@ -95,14 +95,14 @@ let requestTracking = (session) => {
 
         if (result === null || result.lenght === 0) {
             session.send('Desculpe-me, mas ainda não foram encontradas informações com esse código');
-            session.replaceDialog('finishingTalk');
+            session.beginDialog('finishingTalk');
         }
         else if (result && result[0].erro) {
             session.send(`Desculpe-me, mas não foram encontradas informações do pedido. O item pode ter sido recém postado.`);
-            session.replaceDialog('finishingTalk');
+            session.beginDialog('finishingTalk');
         }
         else {
-            session.replaceDialog('trackingInfo', { data: result[0] });
+            session.beginDialog('trackingInfo', { data: result[0] });
         }
 
 

@@ -47,7 +47,7 @@ module.exports = function (session, args, next) {
     let _user = session.userData.userName;
 
     if (_user) {
-        session.replaceDialog('instructions');
+        session.beginDialog('instructions');
         return;
     }
 
@@ -57,5 +57,5 @@ module.exports = function (session, args, next) {
 
     session.userData.userName = _user;
     session.userData.trackingHistory = [];
-    session.replaceDialog('instructions');
+    session.beginDialog('instructions');
 };
