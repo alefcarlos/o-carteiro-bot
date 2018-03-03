@@ -105,6 +105,7 @@ let requestTracking = (session) => {
 
 
     }).catch(() => {
-        session.endConversation(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
+        session.send(`Desculpe-me, não consegui rastrear as informações agora, pois os serviços dos correios está fora.`);
+        session.endConversation();
     });
 };
