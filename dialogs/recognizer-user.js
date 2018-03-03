@@ -43,10 +43,7 @@ module.exports = function (session, args, next) {
         });
     }
 
-    //Verificar usuário(Facebook e Skype, somente)
-    let _user = session.userData.userName;
-
-    if (_user) {
+    if (session.userData.trackingHistory != undefined) {
         session.replaceDialog('instructions');
         return;
     }
