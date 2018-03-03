@@ -12,7 +12,7 @@ module.exports = function (session) {
         builder.SuggestedActions.create(
             session, [
                 builder.CardAction.imBack(session, "rastrear", "Rastrear"),
-                builder.CardAction.imBack(session, "ver histórico", "Ver histórico")
+                builder.CardAction.imBack(session, "histórico", "Ver histórico")
             ]
         ));
 

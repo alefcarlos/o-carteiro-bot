@@ -6,27 +6,25 @@ const carteiroUtils = require('../carteiro-utils');
 module.exports = [
     function (session, args, next) {
         console.log("[docs/tracking-find.js]Iniciando diálogo: tracking-find");
-
         console.log(`[docs/tracking-find.js]É uma nova tentativa de digitar o código ? ${args.reprompt != undefined}`);
 
         // Resolve and store any Tracking.Code entity passed from LUIS.
-        let _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
-        let _trackingCode = _code ? _code.entity.toUpperCase() : '';
+        // let _code = builder.EntityRecognizer.findEntity(args.entities, 'Tracking.Code');
+        // let _trackingCode = _code ? _code.entity.toUpperCase() : '';
 
-        console.log(`[docs/tracking-find.js]Encontrou código de rastreio via luis ? ${_trackingCode != ''}`)
+        // console.log(`[docs/tracking-find.js]Encontrou código de rastreio via luis ? ${_trackingCode != ''}`)
 
-        if (!_code) {
+        let _trackingCode = ''
 
-            //Se não encontrou via LUIS, então verificar por REGEX
-            const rex = (/([A-Z]{2}[0-9]{9}[A-Z]{2}){1}$/);
-            const _found = session.message.text.trim().toUpperCase().match(rex);
+        //Se não encontrou via LUIS, então verificar por REGEX
+        const rex = (/([A-Z]{2}[0-9]{9}[A-Z]{2}){1}/);
+        const _found = session.message.text.trim().toUpperCase().match(rex);
 
 
-            if (_found)
-                _trackingCode = _found[0].toUpperCase();
+        if (_found)
+            _trackingCode = _found[0].toUpperCase();
 
-            console.log(`[docs/tracking-find.js]Encontrou código de rastreio via regex ? ${_trackingCode != ''}`)
-        }
+        console.log(`[docs/tracking-find.js]Encontrou código de rastreio via regex ? ${_trackingCode != ''}`)
 
         session.conversationData.tracking = {
             code: _trackingCode
@@ -74,7 +72,7 @@ module.exports = [
             if (_trackingIndex >= 0 && carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
                 // session.replaceDialog('showTrackingIsFinished', { trackingCode: trackingInfo.code });
                 session.send(`De acordo com seu histórico de rastreio, o item ${trackingInfo.code} já consta como entregue ;)`);
-                session.beginDialog('finishingTalk');
+                session.replaceDialog('finishingTalk');
             }
             else {
                 requestTracking(session);
@@ -95,14 +93,14 @@ let requestTracking = (session) => {
 
         if (result === null || result.lenght === 0) {
             session.send('Desculpe-me, mas ainda não foram encontradas informações com esse código');
-            session.beginDialog('finishingTalk');
+            session.replaceDialog('finishingTalk');
         }
         else if (result && result[0].erro) {
             session.send(`Desculpe-me, mas não foram encontradas informações do pedido. O item pode ter sido recém postado.`);
-            session.beginDialog('finishingTalk');
+            session.replaceDialog('finishingTalk');
         }
         else {
-            session.beginDialog('trackingInfo', { data: result[0] });
+            session.replaceDialog('trackingInfo', { data: result[0] });
         }
 
 

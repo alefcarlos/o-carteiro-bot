@@ -40,7 +40,7 @@ const inMemoryStorage = new builder.MemoryBotStorage();
 const usedStorage = process.env.BotEnv === 'prod' ? cosmosStorage : inMemoryStorage;
 
 // Um bot que obtém o rastreio de um item no correios
-const bot = new builder.UniversalBot(connector)
+const bot = new builder.UniversalBot(connector, require('./dialogs/recognizer-user'))
     .set('storage', usedStorage);
 
 // Make sure you add code to validate these fields
@@ -54,26 +54,33 @@ const LuisModelUrl = `https://${luisAPIHostName}/luis/v2.0/apps/${luisAppId}?sub
 server.post('/api/messages', connector.listen());
 
 // Main dialog with LUIS
-const recognizer = new builder.LuisRecognizer(LuisModelUrl);
-const intents = new builder.IntentDialog({ recognizers: [recognizer] })
-    .matches('Greeting', (session) => {
-        session.replaceDialog('recognizerUser');
-    })
-    .matches('Tracking.Find', 'askForTrackingCode')
-    .matches('Tracking.History', 'seeTrackingHistory')
-    .onDefault((session) => {
-        session.send('Desculpe, não entendi sua frase \'%s\'.', session.message.text);
-    });
+// const recognizer = new builder.LuisRecognizer(LuisModelUrl);
+// const intents = new builder.IntentDialog({ recognizers: [recognizer] })
+//     .matches('Greeting', (session) => {
+//         session.replaceDialog('recognizerUser');
+//     })
+//     .matches('Tracking.Find', 'askForTrackingCode')
+//     .matches('Tracking.History', 'seeTrackingHistory')
+//     .onDefault((session) => {
+//         session.send('Desculpe, não entendi sua frase \'%s\'.', session.message.text);
+//     });
 
-bot.dialog('/', intents);
-bot.dialog('showTrackingIsFinished,', require('./dialogs/tracking-is-finished'));
+// bot.dialog('/', intents);
+
 bot.dialog('instructions', require('./dialogs/instructions'));
-bot.dialog('recognizerUser', require('./dialogs/recognizer-user'));
-bot.dialog('seeTrackingHistory', require('./dialogs/tracking-history'));
+// bot.dialog('recognizerUser', require('./dialogs/recognizer-user'));
+bot.dialog('seeTrackingHistory', require('./dialogs/tracking-history'))
+.triggerAction({
+    matches: /histórico/i
+});
 bot.dialog('finishingTalk', require('./dialogs/finish-talking'));
 bot.dialog('trackingInfo', require('./dialogs/tracking-info'));
 bot.dialog('askForTrackingUpdate', require('./dialogs/ask-for-tracking-update'));
-bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'));
+bot.dialog('askForTrackingCode', require('./dialogs/tracking-find.js'))
+    .triggerAction({
+        matches: /^rastrear/i
+    });;
+bot.dialog('showTrackingIsFinished,', require('./dialogs/tracking-is-finished'));
 bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
 
 // bot.on('conversationUpdate', function (update) {

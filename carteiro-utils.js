@@ -114,6 +114,7 @@ let formatMessageWithUserName = (session, message) => {
     return (_userName) ? `${_userName}, ${message}` : message;
 };
 
+
 module.exports = {
     tracakingFinishedList,
     getTrackingIndex,

@@ -41,7 +41,7 @@ module.exports = function (session, args) {
 
     if (process.env.CarteiroAPIUrl) {
         if (carteiroUtils.trackingIsFinished(session.userData.trackingHistory[_trackingIndex])) {
-            session.beginDialog('finishingTalk'); //Devemos finalizar
+            session.replaceDialog('finishingTalk'); //Devemos finalizar
         }
         else {
             //devemos iniciar o diálogo que pergunta se deseja ser notificado
@@ -49,7 +49,7 @@ module.exports = function (session, args) {
             session.replaceDialog('askForTrackingUpdate');
         }
     } else {
-        session.beginDialog('finishingTalk'); //Devemos finalizar
+        session.replaceDialog('finishingTalk'); //Devemos finalizar
     }
 
 };
