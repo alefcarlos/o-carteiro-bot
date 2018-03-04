@@ -1,5 +1,6 @@
 const builder = require('botbuilder');
 const carteiroAPI = require('../carteiro-api');
+const carteiroUtils = require('../carteiro-utils');
 
 const options = [
     'Sim',
@@ -10,7 +11,7 @@ const options = [
 module.exports = [
     function (session, args) {
         const msg = carteiroUtils.formatMessageWithUserName(session, 'A encomenda ainda foi entregue, gostaria de ser informado **automáticamente** sobre atualizações ?');
-        builder.Prompts.choice(session, _msg, options, { listStyle: builder.ListStyle.button });
+        builder.Prompts.choice(session, msg, options, { listStyle: builder.ListStyle.button });
     },
     (session, results) => {
         const _choice = results.response.entity;

@@ -111,7 +111,7 @@ bot.dialog('showTrackingUpdate', require('./dialogs/show-tracking-update.js'));
 if (process.env.CarteiroAPIUrl) {
     //A cada 1 hora verifica se têm novas notificações
     setInterval(function () {
-
+        console.log("Buscando novas atalizações de trackings..");
         carteiroAPI.getTrackings()
             .then((result) => {
                 //Lista de usuários que requisitaram ser notificados
@@ -136,6 +136,7 @@ if (process.env.CarteiroAPIUrl) {
                 console.log('erro ao obter as informações de trackings ' + error);
             })
 
+        console.log("Buscando novas notificações..");
         carteiroAPI.getNotifications()
             .then((result) => {
                 const list = result.data.result;
