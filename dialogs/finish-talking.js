@@ -18,6 +18,14 @@ module.exports = [
     function (session) {
         console.log("[docs/finish-talking.js]Iniciando diálogo: finish-talking");
 
+        if (session.userData.hasAlreadyAnswared){
+
+            session.send('Muito obrigado por vir falar comigo, às vezes me sinto só hahah')
+            session.send('Qualquer coisa só me chamar novamente ;)')
+            session.endConversation();
+            return;
+        }
+
         const msg = carteiroUtils.formatMessageWithUserName(session, 'Como foi sua experiência ? É importate para eu melhorar meus serviços ;)')
         
         builder.Prompts.choice(session, msg, options, { listStyle: builder.ListStyle.button });
@@ -25,6 +33,7 @@ module.exports = [
     function (session, results) {
         console.log("[docs/finish-talking.js]Iniciando diálogo: finish-talking[2]");
         session.send(`**${results.response.entity}**, muito obrigado pela resposta!`);
+        session.userData.hasAlreadyAnswared = true;
         session.endConversation();
         // session.sendTyping();
 
